@@ -34,7 +34,6 @@ import net.minestom.server.inventory.EquipmentHandler;
 import net.minestom.server.item.ItemStack;
 import net.minestom.server.item.component.AttributeList;
 import net.minestom.server.network.ConnectionState;
-import net.minestom.server.network.packet.server.LazyPacket;
 import net.minestom.server.network.packet.server.SendablePacket;
 import net.minestom.server.network.packet.server.ServerPacket;
 import net.minestom.server.network.packet.server.play.*;
@@ -213,6 +212,7 @@ public class LivingEntity extends Entity implements EquipmentHandler {
                 }
             }
         }
+        
         AttributeList newAttributes = newItemStack.get(DataComponents.ATTRIBUTE_MODIFIERS);
         // Add new attributes
         if (newAttributes != null) {
@@ -586,10 +586,10 @@ public class LivingEntity extends Entity implements EquipmentHandler {
     @Override
     public List<SendablePacket> getNewViewerPackets(Player player) {
         final List<SendablePacket> packets = super.getNewViewerPackets(player);
-        packets.add(new LazyPacket(this::getEquipmentsPacket));
+        packets.add(getEquipmentsPacket());
 
         if (shouldSendAttributes())
-            packets.add(new LazyPacket(this::getPropertiesPacket));
+            packets.add(getPropertiesPacket());
 
         return packets;
     }
