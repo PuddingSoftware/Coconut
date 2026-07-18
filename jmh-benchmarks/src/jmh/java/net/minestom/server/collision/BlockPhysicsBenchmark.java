@@ -181,13 +181,13 @@ public class BlockPhysicsBenchmark {
     @Benchmark
     public PhysicsResult simulateOnGround() {
         return PhysicsUtils.simulateMovement(new Pos(0.5, 64.0, 0.5), new Vec(0.1, 0, 0.1), PLAYER_BB,
-                BORDER, FLOOR_GETTER, AERO, false, true, true, false, null);
+                BORDER, FLOOR_GETTER, AERO, false, true, true, false, 0.6, null);
     }
 
     @Benchmark
     public PhysicsResult simulateFalling() {
         return PhysicsUtils.simulateMovement(new Pos(0.5, 100.0, 0.5), new Vec(0.1, -0.4, 0.1), PLAYER_BB,
-                BORDER, AIR_GETTER, AERO, false, true, false, false, null);
+                BORDER, AIR_GETTER, AERO, false, true, false, false, 0.6, null);
     }
 
     // --- helpers ---

@@ -12,7 +12,9 @@ public class EntityEquipEvent implements EntityInstanceEvent, ItemEvent {
     private ItemStack equippedItem;
     private final EquipmentSlot slot;
 
-    public EntityEquipEvent(Entity entity, ItemStack equippedItem, EquipmentSlot slot) {
+    public EntityEquipEvent(Entity entity,
+                            ItemStack equippedItem,
+                            EquipmentSlot slot) {
         this.entity = entity;
         this.equippedItem = equippedItem;
         this.slot = slot;
@@ -22,8 +24,8 @@ public class EntityEquipEvent implements EntityInstanceEvent, ItemEvent {
         return equippedItem;
     }
 
-    public void setEquippedItem(ItemStack armorItem) {
-        this.equippedItem = armorItem;
+    public void setEquippedItem(ItemStack equippedItem) {
+        this.equippedItem = equippedItem;
     }
 
     public EquipmentSlot getSlot() {
