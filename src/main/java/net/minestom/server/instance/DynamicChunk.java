@@ -8,11 +8,11 @@ import net.minestom.server.coordinate.Point;
 import net.minestom.server.entity.Entity;
 import net.minestom.server.instance.block.Block;
 import net.minestom.server.instance.block.BlockHandler;
-import net.minestom.server.instance.palette.Palette;
 import net.minestom.server.instance.heightmap.Heightmap;
 import net.minestom.server.instance.heightmap.MotionBlockingHeightmap;
 import net.minestom.server.instance.heightmap.MotionBlockingNoLeavesHeightmap;
 import net.minestom.server.instance.heightmap.WorldSurfaceHeightmap;
+import net.minestom.server.instance.palette.Palette;
 import net.minestom.server.network.NetworkBuffer;
 import net.minestom.server.network.packet.server.CachedPacket;
 import net.minestom.server.network.packet.server.SendablePacket;
@@ -32,7 +32,12 @@ import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.BitSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
 
 import static net.minestom.server.coordinate.CoordConversion.globalToSectionRelative;
 
@@ -49,21 +54,31 @@ public class DynamicChunk extends Chunk {
 
     private volatile boolean needsCompleteHeightmapRefresh = true;
 
+    @SuppressWarnings("this-escape") // deliberate self registration during construction
     protected Heightmap motionBlocking = new MotionBlockingHeightmap(this);
+    @SuppressWarnings("this-escape") // deliberate self registration during construction
     protected Heightmap motionBlockingNoLeaves = new MotionBlockingNoLeavesHeightmap(this);
+    @SuppressWarnings("this-escape") // deliberate self registration during construction
     protected Heightmap worldSurface = new WorldSurfaceHeightmap(this);
 
     // Key = ChunkUtils#getBlockIndex
     protected final Int2ObjectOpenHashMap<Block> entries = new Int2ObjectOpenHashMap<>(0);
+    @SuppressWarnings("this-escape") // deliberate self registration during construction
     protected final Int2ObjectOpenHashMap<Block> tickableMap = new Int2ObjectOpenHashMap<>(0);
 
+    @SuppressWarnings("this-escape") // deliberate self registration during construction
     final CachedPacket chunkCache = new CachedPacket(this::createChunkPacket);
 
     public DynamicChunk(Instance instance, int chunkX, int chunkZ) {
         super(instance, chunkX, chunkZ, true);
         // Required to be here because the super call populates the min and max section.
         var sectionsTemp = new Section[maxSection - minSection];
-        Arrays.setAll(sectionsTemp, _ -> new Section());
+        final int biomeId = instance.registries().biome().getId(Biome.PLAINS);
+        Arrays.setAll(sectionsTemp, _ -> {
+            final Section section = new Section();
+            section.biomePalette().fill(biomeId);
+            return section;
+        });
         this.sections = List.of(sectionsTemp);
     }
 
@@ -102,7 +117,7 @@ public class DynamicChunk extends Chunk {
         // Handler
         final BlockHandler handler = block.handler();
         final Block lastCachedBlock;
-        if (handler != null || block.hasNbt() || block.registry().isBlockEntity()) {
+        if (handler != null || block.hasNbt() || block.blockEntityType() != null) {
             lastCachedBlock = this.entries.put(index, block);
         } else {
             lastCachedBlock = this.entries.remove(index);
@@ -141,7 +156,7 @@ public class DynamicChunk extends Chunk {
         this.chunkCache.invalidate();
         Section section = getSectionAt(y);
 
-        var id = instance.registries().biome().getId(biome);
+        final int id = instance.registries().biome().getId(biome);
         if (id == -1) throw new IllegalStateException("Biome has not been registered: " + biome.key());
 
         section.biomePalette().set(
@@ -254,7 +269,11 @@ public class DynamicChunk extends Chunk {
     @Override
     public void reset() {
         assertWriteLock();
-        for (Section section : sections) section.clear();
+        final int biomeId = instance.registries().biome().getId(Biome.PLAINS);
+        for (Section section : sections) {
+            section.blockPalette().fill(0);
+            section.biomePalette().fill(biomeId);
+        }
         this.entries.clear();
     }
 
@@ -309,7 +328,7 @@ public class DynamicChunk extends Chunk {
 
     private static boolean isFluid(int blockStateId) {
         final Block block = Block.fromStateId(blockStateId);
-        return block != null && block.isFluid();
+        return block != null && block.fluid();
     }
 
     UpdateLightPacket createLightPacket() {

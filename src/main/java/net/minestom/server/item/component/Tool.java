@@ -6,6 +6,7 @@ import net.minestom.server.instance.block.Block;
 import net.minestom.server.network.NetworkBuffer;
 import net.minestom.server.network.NetworkBufferTemplate;
 import net.minestom.server.registry.Registries;
+import net.minestom.server.registry.RegistryKey;
 import net.minestom.server.registry.RegistryTag;
 import org.jetbrains.annotations.Nullable;
 
@@ -48,7 +49,13 @@ public record Tool(List<Rule> rules, float defaultMiningSpeed, int damagePerBloc
                 Rule::new);
     }
 
-    public boolean isCorrectForDrops(Block block) {
+    /**
+     * Returns whether this tool is correct for drops from the given block key.
+     *
+     * @param block the block key to test
+     * @return whether the first matching rule marks this tool as correct for drops
+     */
+    public boolean isCorrectForDrops(RegistryKey<Block> block) {
         for (Rule rule : rules) {
             if (rule.correctForDrops != null && rule.blocks.contains(block)) {
                 // First matching rule is picked, other rules are ignored
@@ -58,7 +65,13 @@ public record Tool(List<Rule> rules, float defaultMiningSpeed, int damagePerBloc
         return false;
     }
 
-    public float getSpeed(Block block) {
+    /**
+     * Returns this tool's mining speed for the given block key.
+     *
+     * @param block the block key to test
+     * @return the first matching rule's speed, or {@link #defaultMiningSpeed()} when none match
+     */
+    public float getSpeed(RegistryKey<Block> block) {
         for (Rule rule : rules) {
             if (rule.speed != null && rule.blocks.contains(block)) {
                 // First matching rule is picked, other rules are ignored

@@ -1,13 +1,16 @@
 package net.minestom.server.network.packet;
 
-import net.minestom.server.ServerFlag;
+import net.minestom.server.MinecraftServer;
 import net.minestom.server.network.ConnectionState;
 import net.minestom.server.network.NetworkBuffer;
 import net.minestom.server.network.packet.client.ClientPacket;
 import net.minestom.server.network.packet.server.ServerPacket;
+import net.minestom.server.property.ServerProperties;
+import net.minestom.server.registry.Registries;
 import org.jctools.queues.MessagePassingQueue;
 import org.jetbrains.annotations.ApiStatus;
 
+import java.util.Objects;
 import java.util.function.BiPredicate;
 
 /**
@@ -118,13 +121,31 @@ public final class PacketWriting {
     public static NetworkBuffer allocateTrimmedPacket(ConnectionState state,
                                                       ClientPacket packet,
                                                       int compressionThreshold) {
-        return allocateTrimmedPacket(PacketVanilla.CLIENT_PACKET_PARSER, state, packet, compressionThreshold);
+        return allocateTrimmedPacket(state, packet, compressionThreshold, MinecraftServer.getRegistries());
+    }
+
+    public static NetworkBuffer allocateTrimmedPacket(ConnectionState state,
+                                                      ClientPacket packet,
+                                                      int compressionThreshold,
+                                                      Registries registries) {
+        return allocateTrimmedPacket(
+                PacketVanilla.CLIENT_PACKET_PARSER, state, packet,
+                compressionThreshold, registries);
     }
 
     public static NetworkBuffer allocateTrimmedPacket(ConnectionState state,
                                                       ServerPacket packet,
                                                       int compressionThreshold) {
-        return allocateTrimmedPacket(PacketVanilla.SERVER_PACKET_PARSER, state, packet, compressionThreshold);
+        return allocateTrimmedPacket(state, packet, compressionThreshold, MinecraftServer.getRegistries());
+    }
+
+    public static NetworkBuffer allocateTrimmedPacket(ConnectionState state,
+                                                      ServerPacket packet,
+                                                      int compressionThreshold,
+                                                      Registries registries) {
+        return allocateTrimmedPacket(
+                PacketVanilla.SERVER_PACKET_PARSER, state, packet,
+                compressionThreshold, registries);
     }
 
     public static <T> NetworkBuffer allocateTrimmedPacket(
@@ -132,8 +153,19 @@ public final class PacketWriting {
             ConnectionState state,
             T packet,
             int compressionThreshold) {
+        return allocateTrimmedPacket(parser, state, packet, compressionThreshold, MinecraftServer.getRegistries());
+    }
+
+    public static <T> NetworkBuffer allocateTrimmedPacket(
+            PacketParser<T> parser,
+            ConnectionState state,
+            T packet,
+            int compressionThreshold,
+            Registries registries) {
+        Objects.requireNonNull(registries, "registries");
         NetworkBuffer buffer = PacketVanilla.PACKET_POOL.get();
         try {
+            buffer.registries(registries);
             return allocateTrimmedPacket(buffer, parser, state, packet, compressionThreshold);
         } finally {
             PacketVanilla.PACKET_POOL.add(buffer);
@@ -162,9 +194,9 @@ public final class PacketWriting {
         try {
             writeFramedPacket(tmpBuffer, serializer, id, packet, compressionThreshold);
             return tmpBuffer.copy(0, tmpBuffer.writeIndex());
-        } catch (IndexOutOfBoundsException e) {
+        } catch (IndexOutOfBoundsException _) {
             final long sizeOf = serializer.sizeOf(packet, tmpBuffer.registries());
-            if (sizeOf > ServerFlag.MAX_PACKET_SIZE) {
+            if (sizeOf > ServerProperties.MAX_PACKET_SIZE.get()) {
                 throw new IllegalStateException("Packet too large: " + sizeOf);
             }
             // Add 15 bytes to account for the 3 potential varints in the packet header
@@ -189,7 +221,7 @@ public final class PacketWriting {
             boolean success;
             try {
                 success = writer.test(buffer, packet);
-            } catch (IndexOutOfBoundsException e) {
+            } catch (IndexOutOfBoundsException _) {
                 success = false;
             }
             assert !success || buffer.writeIndex() > 0;
@@ -202,7 +234,7 @@ public final class PacketWriting {
                 buffer.writeIndex(index);
                 if (written < minWrite) {
                     // Try again with a bigger buffer
-                    final long newSize = Math.min(buffer.capacity() * 2, ServerFlag.MAX_PACKET_SIZE);
+                    final long newSize = Math.min(buffer.capacity() * 2, ServerProperties.MAX_PACKET_SIZE.get());
                     if (newSize == buffer.capacity()) break; // We reached the maximum size
                     buffer.resize(newSize);
                 } else {

@@ -1,16 +1,21 @@
 package net.minestom.server.network.socket;
 
 import net.minestom.server.MinecraftServer;
-import net.minestom.server.ServerFlag;
 import net.minestom.server.network.packet.PacketParser;
 import net.minestom.server.network.packet.PacketVanilla;
 import net.minestom.server.network.player.PlayerSocketConnection;
+import net.minestom.server.property.ServerProperties;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.UnknownNullability;
 
 import java.io.EOFException;
 import java.io.IOException;
-import java.net.*;
+import java.net.InetSocketAddress;
+import java.net.ProtocolFamily;
+import java.net.Socket;
+import java.net.SocketAddress;
+import java.net.StandardProtocolFamily;
+import java.net.UnixDomainSocketAddress;
 import java.nio.channels.ClosedChannelException;
 import java.nio.channels.ServerSocketChannel;
 import java.nio.channels.SocketChannel;
@@ -19,6 +24,7 @@ import java.util.Objects;
 import java.util.concurrent.atomic.AtomicReference;
 
 public final class Server {
+    private volatile ConnectionFactory connectionFactory = PlayerSocketConnection::new;
     private volatile boolean stop;
 
     private final PacketParser.Client packetParser;
@@ -75,10 +81,11 @@ public final class Server {
                 final SocketChannel client;
                 try {
                     client = serverSocket.accept();
-                } catch (ClosedChannelException e) {
+                } catch (ClosedChannelException _) {
                     break; // We are exiting, bye bye!
                 } catch (IOException e) {
-                    MinecraftServer.getExceptionManager().handleException(e);
+                    if (!ServerProperties.SUPPRESS_CONNECTION_ACCEPT_ERRORS.get())
+                        MinecraftServer.getExceptionManager().handleException(e);
                     continue;
                 }
 
@@ -87,26 +94,36 @@ public final class Server {
                     configureSocket(client);
                     Thread readThread = readBuilder.unstarted(() -> playerReadLoop(reference.get()));
                     Thread writeThread = writeBuilder.unstarted(() -> playerWriteLoop(reference.get()));
-                    PlayerSocketConnection connection = new PlayerSocketConnection(client, client.getRemoteAddress(), readThread, writeThread);
+                    PlayerSocketConnection connection = connectionFactory.create(client, client.getRemoteAddress(), readThread, writeThread);
+
+                    if (connection == null) {
+                        client.close(); // Rejected by the factory
+                        continue;
+                    }
+
                     reference.set(connection);
                     readThread.start();
                     writeThread.start();
-                } catch (IOException _) {
+                } catch (IOException | RuntimeException e) {
+                    if (!ServerProperties.SUPPRESS_CONNECTION_ACCEPT_ERRORS.get())
+                        MinecraftServer.getExceptionManager().handleException(e);
                     try {
                         client.close();
-                    } catch (IOException _) {}
+                    } catch (IOException _) {
+                        // Nothing more we can do, drop the connection
+                    }
                 }
             }
         });
     }
 
-    private void configureSocket(SocketChannel channel) throws IOException {
+    private static void configureSocket(SocketChannel channel) throws IOException {
         if (channel.getLocalAddress() instanceof InetSocketAddress) {
             Socket socket = channel.socket();
-            socket.setSendBufferSize(ServerFlag.SOCKET_SEND_BUFFER_SIZE);
-            socket.setReceiveBufferSize(ServerFlag.SOCKET_RECEIVE_BUFFER_SIZE);
-            socket.setTcpNoDelay(ServerFlag.SOCKET_NO_DELAY);
-            socket.setSoTimeout(ServerFlag.SOCKET_TIMEOUT);
+            socket.setSendBufferSize(ServerProperties.SOCKET_SEND_BUFFER_SIZE.get());
+            socket.setReceiveBufferSize(ServerProperties.SOCKET_RECEIVE_BUFFER_SIZE.get());
+            socket.setTcpNoDelay(ServerProperties.SOCKET_NO_DELAY.get());
+            socket.setSoTimeout(ServerProperties.SOCKET_TIMEOUT.get());
         }
     }
 
@@ -119,9 +136,13 @@ public final class Server {
             } catch (ClosedChannelException | EOFException _) {
                 connection.disconnect(); // We closed the socket during read, just exit.
                 break;
+            } catch (IOException e) {
+                if (!ServerProperties.SUPPRESS_CONNECTION_IO_ERRORS.get())
+                    MinecraftServer.getExceptionManager().handleException(e);
+                connection.disconnect();
+                break;
             } catch (Throwable e) {
-                boolean isExpected = e instanceof SocketException && e.getMessage().equals("Connection reset");
-                if (!isExpected) MinecraftServer.getExceptionManager().handleException(e);
+                MinecraftServer.getExceptionManager().handleException(e);
                 connection.disconnect();
                 break;
             }
@@ -136,9 +157,12 @@ public final class Server {
                     connection.flushSync();
                 } catch (ClosedChannelException | EOFException _) {
                     connection.disconnect();
+                } catch (IOException e) {
+                    if (!ServerProperties.SUPPRESS_CONNECTION_IO_ERRORS.get())
+                        MinecraftServer.getExceptionManager().handleException(e);
+                    connection.disconnect();
                 } catch (Throwable e) {
-                    boolean isExpected = e instanceof IOException && e.getMessage().equals("Broken pipe");
-                    if (!isExpected) MinecraftServer.getExceptionManager().handleException(e);
+                    MinecraftServer.getExceptionManager().handleException(e);
                     connection.disconnect();
                 }
                 if (!connection.isOnline()) {
@@ -179,6 +203,14 @@ public final class Server {
         } catch (IOException e) {
             MinecraftServer.getExceptionManager().handleException(e);
         }
+    }
+
+    public void setConnectionFactory(ConnectionFactory connectionFactory) {
+        this.connectionFactory = Objects.requireNonNull(connectionFactory);
+    }
+
+    public ConnectionFactory connectionFactory() {
+        return connectionFactory;
     }
 
     @ApiStatus.Internal

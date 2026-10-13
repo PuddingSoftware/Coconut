@@ -30,7 +30,10 @@ import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.UnknownNullability;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.function.Consumer;
 import java.util.function.IntUnaryOperator;
 import java.util.function.UnaryOperator;
@@ -41,6 +44,9 @@ import java.util.function.UnaryOperator;
  * <p>
  * An item stack cannot be null, {@link ItemStack#AIR} should be used instead.
  */
+// Static fields intentionally construct the implementation subclass; the cycle cannot
+// race because the implementation types are only ever reached through this interface
+@SuppressWarnings("ClassInitializationDeadlock")
 public sealed interface ItemStack extends TagReadable, DataComponent.Holder, HoverEventSource<HoverEvent.ShowItem>
         permits ItemStackImpl {
 
@@ -117,14 +123,14 @@ public sealed interface ItemStack extends TagReadable, DataComponent.Holder, Hov
      */
     @Deprecated
     static ItemStack fromItemNBT(CompoundBinaryTag nbtCompound) {
-        return fromItemNBT(nbtCompound, MinecraftServer.process());
+        return fromItemNBT(nbtCompound, MinecraftServer.getRegistries());
     }
 
     /**
      * Converts this item to an NBT tag containing the id (material), count (amount), and components.
      *
      * @param nbtCompound The nbt representation of the item
-     * @param registries The registries to use when decoding
+     * @param registries  The registries to use when decoding
      */
     static ItemStack fromItemNBT(CompoundBinaryTag nbtCompound, Registries registries) {
         final Transcoder<BinaryTag> coder = new RegistryTranscoder<>(Transcoder.NBT, registries);
@@ -311,7 +317,7 @@ public sealed interface ItemStack extends TagReadable, DataComponent.Holder, Hov
      */
     @Deprecated
     default CompoundBinaryTag toItemNBT() {
-        return toItemNBT(MinecraftServer.process());
+        return toItemNBT(MinecraftServer.getRegistries());
     }
 
     /**
@@ -336,7 +342,7 @@ public sealed interface ItemStack extends TagReadable, DataComponent.Holder, Hov
     // These functions are mirrors of ComponentHolder, but we can't actually implement that interface
     // because it conflicts with DataComponent.Holder.
 
-    static Collection<Component> textComponents(ItemStack itemStack) {
+    static List<Component> textComponents(ItemStack itemStack) {
         final var components = new ArrayList<>(itemStack.get(DataComponents.LORE, List.of()));
         final var displayName = itemStack.get(DataComponents.CUSTOM_NAME);
         if (displayName != null) components.add(displayName);
@@ -368,13 +374,13 @@ public sealed interface ItemStack extends TagReadable, DataComponent.Holder, Hov
          */
         @Deprecated
         static Hash of(ItemStack itemStack) {
-            return of(itemStack, MinecraftServer.process());
+            return of(itemStack, MinecraftServer.getRegistries());
         }
 
         /**
          * Creates a hash of an {@link ItemStack} using the passed registries. Used in packets to identify the item.
          *
-         * @param itemStack The item stack to hash
+         * @param itemStack  The item stack to hash
          * @param registries The registries to use
          * @return the {@link Hash}
          */

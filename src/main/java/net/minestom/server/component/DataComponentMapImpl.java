@@ -12,7 +12,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.List;
 import java.util.Objects;
 import java.util.function.Function;
@@ -43,8 +42,8 @@ record DataComponentMapImpl(Int2ObjectMap<@Nullable Object> components) implemen
     }
 
     @Override
+    @SuppressWarnings("unchecked")
     public <T> @Nullable T get(DataComponent<T> component) {
-        //noinspection unchecked
         return (T) components.get(component.id());
     }
 
@@ -58,9 +57,9 @@ record DataComponentMapImpl(Int2ObjectMap<@Nullable Object> components) implemen
     }
 
     @Override
+    @SuppressWarnings("unchecked")
     public <T> @Nullable T get(DataComponentMap prototype, DataComponent<T> component) {
         if (components.containsKey(component.id())) {
-            //noinspection unchecked
             return (T) components.get(component.id());
         } else {
             return prototype.get(component);
@@ -90,7 +89,7 @@ record DataComponentMapImpl(Int2ObjectMap<@Nullable Object> components) implemen
     }
 
     @Override
-    public Collection<DataComponent.Value> entrySet() {
+    public List<DataComponent.Value> entrySet() {
         if (components.isEmpty()) return List.of();
         final List<DataComponent.Value> entries = new ArrayList<>(components.size());
         for (var entry : components.int2ObjectEntrySet())
@@ -116,8 +115,8 @@ record DataComponentMapImpl(Int2ObjectMap<@Nullable Object> components) implemen
         }
 
         @Override
+        @SuppressWarnings("unchecked")
         public <T> @Nullable T get(DataComponent<T> component) {
-            //noinspection unchecked
             return (T) components.get(component.id());
         }
 
@@ -141,8 +140,8 @@ record DataComponentMapImpl(Int2ObjectMap<@Nullable Object> components) implemen
         }
 
         @Override
+        @SuppressWarnings("unchecked")
         public <T> @Nullable T get(DataComponent<T> component) {
-            //noinspection unchecked
             return (T) components.get(component.id());
         }
 
@@ -190,7 +189,7 @@ record DataComponentMapImpl(Int2ObjectMap<@Nullable Object> components) implemen
                 if (entry.getValue() == null) continue;
 
                 buffer.write(NetworkBuffer.VAR_INT, entry.getIntKey());
-                //noinspection unchecked
+                @SuppressWarnings("unchecked")
                 DataComponent<Object> type = (DataComponent<@NotNull Object>) this.idToType.apply(entry.getIntKey());
                 Check.notNull(type, "Unknown component id: {0}", entry.getIntKey());
                 if (isTrusted) {
@@ -212,26 +211,35 @@ record DataComponentMapImpl(Int2ObjectMap<@Nullable Object> components) implemen
 
         @Override
         public DataComponentMap read(NetworkBuffer buffer) {
-            int added = buffer.read(NetworkBuffer.VAR_INT);
-            int removed = isPatch ? buffer.read(NetworkBuffer.VAR_INT) : 0;
-            Check.stateCondition(added + removed > 256, "Data component map too large: {0}", added + removed);
-            Int2ObjectMap<@Nullable Object> patch = new Int2ObjectArrayMap<>(added + removed);
+            final int added = buffer.read(NetworkBuffer.VAR_INT);
+            final int removed = isPatch ? buffer.read(NetworkBuffer.VAR_INT) : 0;
+            Check.stateCondition(added < 0 || added > 256, "Invalid added component count: {0}", added);
+            Check.stateCondition(removed < 0 || removed > 256, "Invalid removed component count: {0}", removed);
+            final int total = added + removed;
+            Int2ObjectMap<@Nullable Object> patch = new Int2ObjectArrayMap<>(total);
             for (int i = 0; i < added; i++) {
                 int id = buffer.read(NetworkBuffer.VAR_INT);
-                //noinspection unchecked
+                @SuppressWarnings("unchecked")
                 DataComponent<Object> type = (DataComponent<@NotNull Object>) this.idToType.apply(id);
                 Check.notNull(type, "Unknown component: {0}", id);
+                Check.stateCondition(patch.containsKey(type.id()), "Duplicate component: {0}", id);
                 if (isTrusted) {
                     patch.put(type.id(), type.read(buffer));
                 } else {
-                    final byte[] array = buffer.read(NetworkBuffer.BYTE_ARRAY);
-                    final NetworkBuffer tempBuffer = NetworkBuffer.wrap(array, 0, array.length, buffer.registries());
+                    final int length = buffer.read(NetworkBuffer.VAR_INT);
+                    Check.argCondition(length < 0, "Component data length cannot be negative: {0}", length);
+                    buffer.ensureReadable(length);
+                    final long offset = buffer.advanceRead(length);
+                    final NetworkBuffer tempBuffer = buffer.slice(offset, length, 0, length).readOnly();
                     patch.put(type.id(), type.read(tempBuffer));
                 }
             }
             for (int i = 0; i < removed; i++) {
                 int id = buffer.read(NetworkBuffer.VAR_INT);
-                patch.put(id, null);
+                final DataComponent<?> type = this.idToType.apply(id);
+                Check.notNull(type, "Unknown component: {0}", id);
+                Check.stateCondition(patch.containsKey(type.id()), "Duplicate component: {0}", id);
+                patch.put(type.id(), null);
             }
             return new DataComponentMapImpl(patch);
         }
@@ -287,7 +295,7 @@ record DataComponentMapImpl(Int2ObjectMap<@Nullable Object> components) implemen
 
             final Transcoder.MapBuilder<D> map = coder.createMap();
             for (var entry : patch.components.int2ObjectEntrySet()) {
-                //noinspection unchecked
+                @SuppressWarnings("unchecked")
                 DataComponent<Object> type = (DataComponent<@NotNull Object>) this.idToType.apply(entry.getIntKey());
                 if (type == null) return new Result.Error<>("unknown data component id: " + entry.getIntKey());
                 if (entry.getValue() == null) {

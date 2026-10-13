@@ -1,11 +1,11 @@
 package net.minestom.server.item.instrument;
 
 import net.kyori.adventure.text.Component;
-import net.minestom.server.ServerFlag;
 import net.minestom.server.codec.Codec;
 import net.minestom.server.codec.StructCodec;
 import net.minestom.server.network.NetworkBuffer;
 import net.minestom.server.network.NetworkBufferTemplate;
+import net.minestom.server.property.ServerProperties;
 import net.minestom.server.registry.BuiltinRegistries;
 import net.minestom.server.registry.DynamicRegistry;
 import net.minestom.server.registry.Holder;
@@ -19,13 +19,13 @@ public sealed interface Instrument extends Holder.Direct<Instrument>, Instrument
             NetworkBuffer.FLOAT, Instrument::useDuration,
             NetworkBuffer.FLOAT, Instrument::range,
             NetworkBuffer.COMPONENT, Instrument::description,
-            InstrumentImpl::new);
+            Instrument::create);
     Codec<Instrument> REGISTRY_CODEC = StructCodec.struct(
             "sound_event", SoundEvent.CODEC, Instrument::soundEvent,
             "use_duration", Codec.FLOAT, Instrument::useDuration,
             "range", Codec.FLOAT, Instrument::range,
             "description", Codec.COMPONENT, Instrument::description,
-            InstrumentImpl::new);
+            Instrument::create);
 
     NetworkBuffer.Type<Holder<Instrument>> NETWORK_TYPE = Holder.networkType(Registries::instrument, REGISTRY_NETWORK_TYPE);
     Codec<Holder<Instrument>> CODEC = Holder.codec(Registries::instrument, REGISTRY_CODEC);
@@ -58,7 +58,7 @@ public sealed interface Instrument extends Holder.Direct<Instrument>, Instrument
     float useDuration();
 
     default int useDurationTicks() {
-        return (int) (useDuration() * ServerFlag.SERVER_TICKS_PER_SECOND);
+        return (int) (useDuration() * ServerProperties.SERVER_TICKS_PER_SECOND.get());
     }
 
     float range();

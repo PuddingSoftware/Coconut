@@ -9,7 +9,11 @@ import net.minestom.server.entity.RelativeFlags;
 import net.minestom.server.event.EventDispatcher;
 import net.minestom.server.event.player.PlayerMoveEvent;
 import net.minestom.server.instance.Instance;
-import net.minestom.server.network.packet.client.play.*;
+import net.minestom.server.network.packet.client.play.ClientPlayerPositionAndRotationPacket;
+import net.minestom.server.network.packet.client.play.ClientPlayerPositionPacket;
+import net.minestom.server.network.packet.client.play.ClientPlayerPositionStatusPacket;
+import net.minestom.server.network.packet.client.play.ClientPlayerRotationPacket;
+import net.minestom.server.network.packet.client.play.ClientTeleportConfirmPacket;
 import net.minestom.server.network.packet.server.play.PlayerPositionAndLookPacket;
 import net.minestom.server.utils.chunk.ChunkUtils;
 import org.jetbrains.annotations.ApiStatus;
@@ -73,7 +77,7 @@ public class PlayerPositionListener {
         }
         // Try to move in an unloaded chunk, prevent it
         if (!currentPosition.sameChunk(packetPosition) && !ChunkUtils.isLoaded(instance, packetPosition)) {
-            player.teleport(currentPosition);
+            var _ = player.teleport(currentPosition);
             return;
         }
 
@@ -101,7 +105,7 @@ public class PlayerPositionListener {
                 player.refreshOnGround(onGround);
                 player.setView(eventPosition.yaw(), eventPosition.pitch());
             } else {
-                player.teleport(eventPosition);
+                var _ = player.teleport(eventPosition);
             }
         }
     }

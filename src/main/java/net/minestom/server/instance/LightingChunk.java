@@ -2,7 +2,6 @@ package net.minestom.server.instance;
 
 import net.kyori.adventure.key.Key;
 import net.minestom.server.MinecraftServer;
-import net.minestom.server.ServerFlag;
 import net.minestom.server.collision.Shape;
 import net.minestom.server.coordinate.CoordConversion;
 import net.minestom.server.coordinate.Point;
@@ -15,9 +14,16 @@ import net.minestom.server.instance.light.Light;
 import net.minestom.server.instance.palette.Palette;
 import net.minestom.server.network.packet.server.CachedPacket;
 import net.minestom.server.network.packet.server.play.data.LightData;
+import net.minestom.server.property.ServerProperties;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.ArrayDeque;
+import java.util.ArrayList;
+import java.util.BitSet;
+import java.util.Collection;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
@@ -38,6 +44,7 @@ public class LightingChunk extends DynamicChunk {
     private static final ExecutorService pool = Executors.newWorkStealingPool();
 
     private volatile @Nullable OcclusionData occlusionData;
+    @SuppressWarnings("this-escape") // deliberate self registration during construction
     final CachedPacket partialLightCache = new CachedPacket(this::createLightPacket);
     private @Nullable LightData partialLightData;
     private @Nullable LightData fullLightData;
@@ -46,7 +53,6 @@ public class LightingChunk extends DynamicChunk {
 
     private final ReentrantLock packetGenerationLock = new ReentrantLock();
     private final AtomicInteger resendTimer = new AtomicInteger(-1);
-    private final int resendDelay = ServerFlag.SEND_LIGHT_AFTER_BLOCK_PLACEMENT_DELAY;
 
     private boolean doneInit = false;
 
@@ -86,6 +92,7 @@ public class LightingChunk extends DynamicChunk {
             Block.LAVA.key()
     );
 
+    @Override
     public void invalidate() {
         this.partialLightCache.invalidate();
         this.chunkCache.invalidate();
@@ -101,13 +108,13 @@ public class LightingChunk extends DynamicChunk {
         super(instance, chunkX, chunkZ, sections);
     }
 
-    private boolean checkSkyOcclusion(Block block) {
+    private static boolean checkSkyOcclusion(Block block) {
         if (block == Block.AIR) return false;
         if (DIFFUSE_SKY_LIGHT.contains(block.key())) return true;
 
-        Shape shape = block.registry().occlusionShape();
-        boolean occludesTop = Block.AIR.registry().occlusionShape().isOccluded(shape, BlockFace.TOP);
-        boolean occludesBottom = Block.AIR.registry().occlusionShape().isOccluded(shape, BlockFace.BOTTOM);
+        Shape shape = block.occlusionShape();
+        boolean occludesTop = Block.AIR.occlusionShape().isOccluded(shape, BlockFace.TOP);
+        boolean occludesBottom = Block.AIR.occlusionShape().isOccluded(shape, BlockFace.BOTTOM);
 
         return occludesBottom || occludesTop;
     }
@@ -148,7 +155,7 @@ public class LightingChunk extends DynamicChunk {
             for (int j = -1; j <= 1; j++) {
                 Chunk neighborChunk = instance.getChunk(chunkX + i, chunkZ + j);
                 if (neighborChunk instanceof LightingChunk light) {
-                    light.resendTimer.set(resendDelay);
+                    light.resendTimer.set(ServerProperties.SEND_LIGHT_AFTER_BLOCK_PLACEMENT_DELAY.get());
                 }
             }
         }
@@ -307,7 +314,7 @@ public class LightingChunk extends DynamicChunk {
                 final int sectionMinY = index * 16 + chunkMin;
                 index++;
 
-                if ((wasUpdatedSky) && this.instance.getCachedDimensionType().hasSkylight() && sectionMinY <= (highestNeighborBlock + 16)) {
+                if (wasUpdatedSky && this.instance.getCachedDimensionType().hasSkylight() && sectionMinY <= highestNeighborBlock + 16) {
                     final byte[] skyLight = section.skyLight().array();
 
                     if (skyLight.length != 0 && skyLight != EMPTY_CONTENT) {

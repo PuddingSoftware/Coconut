@@ -1,8 +1,12 @@
 package net.minestom.server.tag;
 
-import net.kyori.adventure.nbt.*;
+import net.kyori.adventure.nbt.BinaryTag;
+import net.kyori.adventure.nbt.BinaryTagType;
+import net.kyori.adventure.nbt.BinaryTagTypes;
+import net.kyori.adventure.nbt.CompoundBinaryTag;
+import net.kyori.adventure.nbt.ListBinaryTag;
+import net.minestom.server.property.ServerProperties;
 import net.minestom.server.utils.nbt.BinaryTagUtil;
-import net.minestom.server.ServerFlag;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -26,17 +30,17 @@ final class TagNbtSeparator {
             entry(BinaryTagTypes.DOUBLE, Tag::Double),
             entry(BinaryTagTypes.STRING, Tag::String));
 
-    static void separate(CompoundBinaryTag nbtCompound, Consumer<Entry> consumer) {
+    static void separate(CompoundBinaryTag nbtCompound, Consumer<Entry<?>> consumer) {
         for (var ent : nbtCompound) {
             convert(new ArrayList<>(), ent.getKey(), ent.getValue(), consumer);
         }
     }
 
-    static void separate(String key, BinaryTag nbt, Consumer<Entry> consumer) {
+    static void separate(String key, BinaryTag nbt, Consumer<Entry<?>> consumer) {
         convert(new ArrayList<>(), key, nbt, consumer);
     }
 
-    static Entry separateSingle(String key, BinaryTag nbt) {
+    static Entry<?> separateSingle(String key, BinaryTag nbt) {
         assert !(nbt instanceof CompoundBinaryTag);
         AtomicReference<Entry<?>> entryRef = new AtomicReference<>();
         convert(new ArrayList<>(), key, nbt, entry -> {
@@ -48,14 +52,15 @@ final class TagNbtSeparator {
         return entry;
     }
 
-    private static void convert(List<String> path, String key, BinaryTag nbt, Consumer<Entry> consumer) {
+    @SuppressWarnings("unchecked")
+    private static void convert(List<String> path, String key, BinaryTag nbt, Consumer<Entry<?>> consumer) {
         var tagFunction = SUPPORTED_TYPES.get(nbt.type());
         if (tagFunction != null) {
             Tag<?> tag = tagFunction.apply(key);
             consumer.accept(makeEntry(path, (Tag<Object>) tag, BinaryTagUtil.nbtValueFromTag(nbt)));
         } else if (nbt instanceof CompoundBinaryTag nbtCompound) {
             if (nbtCompound.isEmpty()) {
-                if (ServerFlag.SERIALIZE_EMPTY_COMPOUND || path.isEmpty()) {
+                if (ServerProperties.SERIALIZE_EMPTY_COMPOUND.get() || path.isEmpty()) {
                     consumer.accept(makeEntry(path, Tag.NBT(key), nbt));
                 }
             } else {
@@ -96,6 +101,10 @@ final class TagNbtSeparator {
     record Entry<T>(TagImpl<T> tag, T value) {
         public Entry(Tag<T> tag, T value) {
             this((TagImpl<T>) tag, value);
+        }
+
+        void write(TagWritable writer) {
+            writer.setTag(tag, value);
         }
     }
 }

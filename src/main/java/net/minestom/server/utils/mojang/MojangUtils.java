@@ -2,7 +2,8 @@ package net.minestom.server.utils.mojang;
 
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
-import net.minestom.server.ServerFlag;
+import net.minestom.server.property.ServerProperties;
+import net.minestom.server.utils.StringUtils;
 import net.minestom.server.utils.url.URLUtils;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Blocking;
@@ -15,7 +16,6 @@ import java.net.SocketAddress;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.util.UUID;
-import java.util.regex.Pattern;
 
 /**
  * Utils class using mojang API.
@@ -25,10 +25,8 @@ public final class MojangUtils {
     private static final String FROM_USERNAME_URL = "https://api.minecraftservices.com/minecraft/profile/lookup/name/%s";
 
     // Auth
-    private static final String BASE_AUTH_URL = ServerFlag.AUTH_URL.concat("?username=%s&serverId=%s");
+    private static final String BASE_AUTH_URL = ServerProperties.AUTH_URL.get().concat("?username=%s&serverId=%s");
     private static final String PREVENT_PROXY_CONNECTIONS_AUTH_URL = BASE_AUTH_URL.concat("&ip=%s");
-
-    private static final Pattern USERNAME_PATTERN = Pattern.compile("[a-zA-Z0-9_]{3,16}");
 
     /**
      * Gets a player's UUID from their username
@@ -41,7 +39,7 @@ public final class MojangUtils {
     public static UUID getUUID(String username) throws IOException {
         // Thanks stackoverflow: https://stackoverflow.com/a/19399768/13247146
         return UUID.fromString(
-                formatUUID(retrieve(String.format(FROM_USERNAME_URL, validateUsername(username))).get("id").getAsString())
+                formatUUID(retrieve(String.format(FROM_USERNAME_URL, encode(validateUsername(username)))).get("id").getAsString())
         );
     }
 
@@ -67,7 +65,7 @@ public final class MojangUtils {
     public static @Nullable JsonObject fromUuid(UUID uuid) {
         try {
             return retrieve(String.format(FROM_UUID_URL, uuid));
-        } catch (IOException e) {
+        } catch (IOException _) {
             return null;
         }
     }
@@ -83,7 +81,7 @@ public final class MojangUtils {
         final UUID parsed;
         try {
             parsed = UUID.fromString(formatUUID(uuid));
-        } catch (IllegalArgumentException e) {
+        } catch (IllegalArgumentException _) {
             return null;
         }
         return fromUuid(parsed);
@@ -97,10 +95,10 @@ public final class MojangUtils {
      */
     @Blocking
     public static @Nullable JsonObject fromUsername(String username) {
-        if (!USERNAME_PATTERN.matcher(username).matches()) return null;
+        if (!StringUtils.isValidUsername(username)) return null;
         try {
-            return retrieve(String.format(FROM_USERNAME_URL, username));
-        } catch (IOException e) {
+            return retrieve(String.format(FROM_USERNAME_URL, encode(username)));
+        } catch (IOException _) {
             return null;
         }
     }
@@ -112,10 +110,11 @@ public final class MojangUtils {
         final String encodedServerId = encode(serverId);
 
         final String url;
-        if (ServerFlag.AUTH_PREVENT_PROXY_CONNECTIONS
+        // getAddress() is null for unresolved addresses, fall back to the base URL then
+        final InetAddress address = ServerProperties.AUTH_PREVENT_PROXY_CONNECTIONS.get()
                 && userSocket instanceof InetSocketAddress inetSocketAddress
-                && inetSocketAddress.getAddress() instanceof InetAddress address
-        ) {
+                ? inetSocketAddress.getAddress() : null;
+        if (address != null) {
             url = String.format(PREVENT_PROXY_CONNECTIONS_AUTH_URL, username, encodedServerId, encode(address.getHostAddress()));
         } else {
             url = String.format(BASE_AUTH_URL, username, encodedServerId);
@@ -136,7 +135,7 @@ public final class MojangUtils {
     }
 
     private static String validateUsername(String username) throws IOException {
-        if (!USERNAME_PATTERN.matcher(username).matches()) {
+        if (!StringUtils.isValidUsername(username)) {
             throw new IOException("Invalid username: " + username);
         }
         return username;

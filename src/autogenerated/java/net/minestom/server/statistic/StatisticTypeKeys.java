@@ -11,157 +11,157 @@ import org.jetbrains.annotations.ApiStatus;
 @SuppressWarnings("unused")
 @ApiStatus.NonExtendable
 public interface StatisticTypeKeys {
-    RegistryKey<StatisticType> LEAVE_GAME = RegistryKey.unsafeOf("leave_game");
+    RegistryKey<StatisticType> ANIMALS_BRED = RegistryKey.of("animals_bred");
 
-    RegistryKey<StatisticType> PLAY_TIME = RegistryKey.unsafeOf("play_time");
+    RegistryKey<StatisticType> AVIATE_ONE_CM = RegistryKey.of("aviate_one_cm");
 
-    RegistryKey<StatisticType> TOTAL_WORLD_TIME = RegistryKey.unsafeOf("total_world_time");
+    RegistryKey<StatisticType> BELL_RING = RegistryKey.of("bell_ring");
 
-    RegistryKey<StatisticType> TIME_SINCE_DEATH = RegistryKey.unsafeOf("time_since_death");
+    RegistryKey<StatisticType> BOAT_ONE_CM = RegistryKey.of("boat_one_cm");
 
-    RegistryKey<StatisticType> TIME_SINCE_REST = RegistryKey.unsafeOf("time_since_rest");
+    RegistryKey<StatisticType> CLEAN_ARMOR = RegistryKey.of("clean_armor");
 
-    RegistryKey<StatisticType> SNEAK_TIME = RegistryKey.unsafeOf("sneak_time");
+    RegistryKey<StatisticType> CLEAN_BANNER = RegistryKey.of("clean_banner");
 
-    RegistryKey<StatisticType> WALK_ONE_CM = RegistryKey.unsafeOf("walk_one_cm");
+    RegistryKey<StatisticType> CLEAN_SHULKER_BOX = RegistryKey.of("clean_shulker_box");
 
-    RegistryKey<StatisticType> CROUCH_ONE_CM = RegistryKey.unsafeOf("crouch_one_cm");
+    RegistryKey<StatisticType> CLIMB_ONE_CM = RegistryKey.of("climb_one_cm");
 
-    RegistryKey<StatisticType> SPRINT_ONE_CM = RegistryKey.unsafeOf("sprint_one_cm");
+    RegistryKey<StatisticType> CROUCH_ONE_CM = RegistryKey.of("crouch_one_cm");
 
-    RegistryKey<StatisticType> WALK_ON_WATER_ONE_CM = RegistryKey.unsafeOf("walk_on_water_one_cm");
+    RegistryKey<StatisticType> DAMAGE_ABSORBED = RegistryKey.of("damage_absorbed");
 
-    RegistryKey<StatisticType> FALL_ONE_CM = RegistryKey.unsafeOf("fall_one_cm");
+    RegistryKey<StatisticType> DAMAGE_BLOCKED_BY_SHIELD = RegistryKey.of("damage_blocked_by_shield");
 
-    RegistryKey<StatisticType> CLIMB_ONE_CM = RegistryKey.unsafeOf("climb_one_cm");
+    RegistryKey<StatisticType> DAMAGE_DEALT = RegistryKey.of("damage_dealt");
 
-    RegistryKey<StatisticType> FLY_ONE_CM = RegistryKey.unsafeOf("fly_one_cm");
+    RegistryKey<StatisticType> DAMAGE_DEALT_ABSORBED = RegistryKey.of("damage_dealt_absorbed");
 
-    RegistryKey<StatisticType> WALK_UNDER_WATER_ONE_CM = RegistryKey.unsafeOf("walk_under_water_one_cm");
+    RegistryKey<StatisticType> DAMAGE_DEALT_RESISTED = RegistryKey.of("damage_dealt_resisted");
 
-    RegistryKey<StatisticType> MINECART_ONE_CM = RegistryKey.unsafeOf("minecart_one_cm");
+    RegistryKey<StatisticType> DAMAGE_RESISTED = RegistryKey.of("damage_resisted");
 
-    RegistryKey<StatisticType> BOAT_ONE_CM = RegistryKey.unsafeOf("boat_one_cm");
+    RegistryKey<StatisticType> DAMAGE_TAKEN = RegistryKey.of("damage_taken");
 
-    RegistryKey<StatisticType> PIG_ONE_CM = RegistryKey.unsafeOf("pig_one_cm");
+    RegistryKey<StatisticType> DEATHS = RegistryKey.of("deaths");
 
-    RegistryKey<StatisticType> HAPPY_GHAST_ONE_CM = RegistryKey.unsafeOf("happy_ghast_one_cm");
+    RegistryKey<StatisticType> DROP = RegistryKey.of("drop");
 
-    RegistryKey<StatisticType> HORSE_ONE_CM = RegistryKey.unsafeOf("horse_one_cm");
+    RegistryKey<StatisticType> EAT_CAKE_SLICE = RegistryKey.of("eat_cake_slice");
 
-    RegistryKey<StatisticType> AVIATE_ONE_CM = RegistryKey.unsafeOf("aviate_one_cm");
+    RegistryKey<StatisticType> ENCHANT_ITEM = RegistryKey.of("enchant_item");
 
-    RegistryKey<StatisticType> SWIM_ONE_CM = RegistryKey.unsafeOf("swim_one_cm");
+    RegistryKey<StatisticType> FALL_ONE_CM = RegistryKey.of("fall_one_cm");
 
-    RegistryKey<StatisticType> STRIDER_ONE_CM = RegistryKey.unsafeOf("strider_one_cm");
+    RegistryKey<StatisticType> FILL_CAULDRON = RegistryKey.of("fill_cauldron");
 
-    RegistryKey<StatisticType> NAUTILUS_ONE_CM = RegistryKey.unsafeOf("nautilus_one_cm");
+    RegistryKey<StatisticType> FISH_CAUGHT = RegistryKey.of("fish_caught");
 
-    RegistryKey<StatisticType> JUMP = RegistryKey.unsafeOf("jump");
+    RegistryKey<StatisticType> FLY_ONE_CM = RegistryKey.of("fly_one_cm");
 
-    RegistryKey<StatisticType> DROP = RegistryKey.unsafeOf("drop");
+    RegistryKey<StatisticType> HAPPY_GHAST_ONE_CM = RegistryKey.of("happy_ghast_one_cm");
 
-    RegistryKey<StatisticType> DAMAGE_DEALT = RegistryKey.unsafeOf("damage_dealt");
+    RegistryKey<StatisticType> HORSE_ONE_CM = RegistryKey.of("horse_one_cm");
 
-    RegistryKey<StatisticType> DAMAGE_DEALT_ABSORBED = RegistryKey.unsafeOf("damage_dealt_absorbed");
+    RegistryKey<StatisticType> INSPECT_DISPENSER = RegistryKey.of("inspect_dispenser");
 
-    RegistryKey<StatisticType> DAMAGE_DEALT_RESISTED = RegistryKey.unsafeOf("damage_dealt_resisted");
+    RegistryKey<StatisticType> INSPECT_DROPPER = RegistryKey.of("inspect_dropper");
 
-    RegistryKey<StatisticType> DAMAGE_TAKEN = RegistryKey.unsafeOf("damage_taken");
+    RegistryKey<StatisticType> INSPECT_HOPPER = RegistryKey.of("inspect_hopper");
 
-    RegistryKey<StatisticType> DAMAGE_BLOCKED_BY_SHIELD = RegistryKey.unsafeOf("damage_blocked_by_shield");
+    RegistryKey<StatisticType> INTERACT_WITH_ANVIL = RegistryKey.of("interact_with_anvil");
 
-    RegistryKey<StatisticType> DAMAGE_ABSORBED = RegistryKey.unsafeOf("damage_absorbed");
+    RegistryKey<StatisticType> INTERACT_WITH_BEACON = RegistryKey.of("interact_with_beacon");
 
-    RegistryKey<StatisticType> DAMAGE_RESISTED = RegistryKey.unsafeOf("damage_resisted");
+    RegistryKey<StatisticType> INTERACT_WITH_BLAST_FURNACE = RegistryKey.of("interact_with_blast_furnace");
 
-    RegistryKey<StatisticType> DEATHS = RegistryKey.unsafeOf("deaths");
+    RegistryKey<StatisticType> INTERACT_WITH_BREWINGSTAND = RegistryKey.of("interact_with_brewingstand");
 
-    RegistryKey<StatisticType> MOB_KILLS = RegistryKey.unsafeOf("mob_kills");
+    RegistryKey<StatisticType> INTERACT_WITH_CAMPFIRE = RegistryKey.of("interact_with_campfire");
 
-    RegistryKey<StatisticType> ANIMALS_BRED = RegistryKey.unsafeOf("animals_bred");
+    RegistryKey<StatisticType> INTERACT_WITH_CARTOGRAPHY_TABLE = RegistryKey.of("interact_with_cartography_table");
 
-    RegistryKey<StatisticType> PLAYER_KILLS = RegistryKey.unsafeOf("player_kills");
+    RegistryKey<StatisticType> INTERACT_WITH_CRAFTING_TABLE = RegistryKey.of("interact_with_crafting_table");
 
-    RegistryKey<StatisticType> FISH_CAUGHT = RegistryKey.unsafeOf("fish_caught");
+    RegistryKey<StatisticType> INTERACT_WITH_FURNACE = RegistryKey.of("interact_with_furnace");
 
-    RegistryKey<StatisticType> TALKED_TO_VILLAGER = RegistryKey.unsafeOf("talked_to_villager");
+    RegistryKey<StatisticType> INTERACT_WITH_GRINDSTONE = RegistryKey.of("interact_with_grindstone");
 
-    RegistryKey<StatisticType> TRADED_WITH_VILLAGER = RegistryKey.unsafeOf("traded_with_villager");
+    RegistryKey<StatisticType> INTERACT_WITH_LECTERN = RegistryKey.of("interact_with_lectern");
 
-    RegistryKey<StatisticType> EAT_CAKE_SLICE = RegistryKey.unsafeOf("eat_cake_slice");
+    RegistryKey<StatisticType> INTERACT_WITH_LOOM = RegistryKey.of("interact_with_loom");
 
-    RegistryKey<StatisticType> FILL_CAULDRON = RegistryKey.unsafeOf("fill_cauldron");
+    RegistryKey<StatisticType> INTERACT_WITH_SMITHING_TABLE = RegistryKey.of("interact_with_smithing_table");
 
-    RegistryKey<StatisticType> USE_CAULDRON = RegistryKey.unsafeOf("use_cauldron");
+    RegistryKey<StatisticType> INTERACT_WITH_SMOKER = RegistryKey.of("interact_with_smoker");
 
-    RegistryKey<StatisticType> CLEAN_ARMOR = RegistryKey.unsafeOf("clean_armor");
+    RegistryKey<StatisticType> INTERACT_WITH_STONECUTTER = RegistryKey.of("interact_with_stonecutter");
 
-    RegistryKey<StatisticType> CLEAN_BANNER = RegistryKey.unsafeOf("clean_banner");
+    RegistryKey<StatisticType> JUMP = RegistryKey.of("jump");
 
-    RegistryKey<StatisticType> CLEAN_SHULKER_BOX = RegistryKey.unsafeOf("clean_shulker_box");
+    RegistryKey<StatisticType> LEAVE_GAME = RegistryKey.of("leave_game");
 
-    RegistryKey<StatisticType> INTERACT_WITH_BREWINGSTAND = RegistryKey.unsafeOf("interact_with_brewingstand");
+    RegistryKey<StatisticType> MINECART_ONE_CM = RegistryKey.of("minecart_one_cm");
 
-    RegistryKey<StatisticType> INTERACT_WITH_BEACON = RegistryKey.unsafeOf("interact_with_beacon");
+    RegistryKey<StatisticType> MOB_KILLS = RegistryKey.of("mob_kills");
 
-    RegistryKey<StatisticType> INSPECT_DROPPER = RegistryKey.unsafeOf("inspect_dropper");
+    RegistryKey<StatisticType> NAUTILUS_ONE_CM = RegistryKey.of("nautilus_one_cm");
 
-    RegistryKey<StatisticType> INSPECT_HOPPER = RegistryKey.unsafeOf("inspect_hopper");
+    RegistryKey<StatisticType> OPEN_BARREL = RegistryKey.of("open_barrel");
 
-    RegistryKey<StatisticType> INSPECT_DISPENSER = RegistryKey.unsafeOf("inspect_dispenser");
+    RegistryKey<StatisticType> OPEN_CHEST = RegistryKey.of("open_chest");
 
-    RegistryKey<StatisticType> PLAY_NOTEBLOCK = RegistryKey.unsafeOf("play_noteblock");
+    RegistryKey<StatisticType> OPEN_ENDERCHEST = RegistryKey.of("open_enderchest");
 
-    RegistryKey<StatisticType> TUNE_NOTEBLOCK = RegistryKey.unsafeOf("tune_noteblock");
+    RegistryKey<StatisticType> OPEN_SHULKER_BOX = RegistryKey.of("open_shulker_box");
 
-    RegistryKey<StatisticType> POT_FLOWER = RegistryKey.unsafeOf("pot_flower");
+    RegistryKey<StatisticType> PIG_ONE_CM = RegistryKey.of("pig_one_cm");
 
-    RegistryKey<StatisticType> TRIGGER_TRAPPED_CHEST = RegistryKey.unsafeOf("trigger_trapped_chest");
+    RegistryKey<StatisticType> PLAY_NOTEBLOCK = RegistryKey.of("play_noteblock");
 
-    RegistryKey<StatisticType> OPEN_ENDERCHEST = RegistryKey.unsafeOf("open_enderchest");
+    RegistryKey<StatisticType> PLAY_RECORD = RegistryKey.of("play_record");
 
-    RegistryKey<StatisticType> ENCHANT_ITEM = RegistryKey.unsafeOf("enchant_item");
+    RegistryKey<StatisticType> PLAY_TIME = RegistryKey.of("play_time");
 
-    RegistryKey<StatisticType> PLAY_RECORD = RegistryKey.unsafeOf("play_record");
+    RegistryKey<StatisticType> PLAYER_KILLS = RegistryKey.of("player_kills");
 
-    RegistryKey<StatisticType> INTERACT_WITH_FURNACE = RegistryKey.unsafeOf("interact_with_furnace");
+    RegistryKey<StatisticType> POT_FLOWER = RegistryKey.of("pot_flower");
 
-    RegistryKey<StatisticType> INTERACT_WITH_CRAFTING_TABLE = RegistryKey.unsafeOf("interact_with_crafting_table");
+    RegistryKey<StatisticType> RAID_TRIGGER = RegistryKey.of("raid_trigger");
 
-    RegistryKey<StatisticType> OPEN_CHEST = RegistryKey.unsafeOf("open_chest");
+    RegistryKey<StatisticType> RAID_WIN = RegistryKey.of("raid_win");
 
-    RegistryKey<StatisticType> SLEEP_IN_BED = RegistryKey.unsafeOf("sleep_in_bed");
+    RegistryKey<StatisticType> SLEEP_IN_BED = RegistryKey.of("sleep_in_bed");
 
-    RegistryKey<StatisticType> OPEN_SHULKER_BOX = RegistryKey.unsafeOf("open_shulker_box");
+    RegistryKey<StatisticType> SNEAK_TIME = RegistryKey.of("sneak_time");
 
-    RegistryKey<StatisticType> OPEN_BARREL = RegistryKey.unsafeOf("open_barrel");
+    RegistryKey<StatisticType> SPRINT_ONE_CM = RegistryKey.of("sprint_one_cm");
 
-    RegistryKey<StatisticType> INTERACT_WITH_BLAST_FURNACE = RegistryKey.unsafeOf("interact_with_blast_furnace");
+    RegistryKey<StatisticType> STRIDER_ONE_CM = RegistryKey.of("strider_one_cm");
 
-    RegistryKey<StatisticType> INTERACT_WITH_SMOKER = RegistryKey.unsafeOf("interact_with_smoker");
+    RegistryKey<StatisticType> SWIM_ONE_CM = RegistryKey.of("swim_one_cm");
 
-    RegistryKey<StatisticType> INTERACT_WITH_LECTERN = RegistryKey.unsafeOf("interact_with_lectern");
+    RegistryKey<StatisticType> TALKED_TO_VILLAGER = RegistryKey.of("talked_to_villager");
 
-    RegistryKey<StatisticType> INTERACT_WITH_CAMPFIRE = RegistryKey.unsafeOf("interact_with_campfire");
+    RegistryKey<StatisticType> TARGET_HIT = RegistryKey.of("target_hit");
 
-    RegistryKey<StatisticType> INTERACT_WITH_CARTOGRAPHY_TABLE = RegistryKey.unsafeOf("interact_with_cartography_table");
+    RegistryKey<StatisticType> TIME_SINCE_DEATH = RegistryKey.of("time_since_death");
 
-    RegistryKey<StatisticType> INTERACT_WITH_LOOM = RegistryKey.unsafeOf("interact_with_loom");
+    RegistryKey<StatisticType> TIME_SINCE_REST = RegistryKey.of("time_since_rest");
 
-    RegistryKey<StatisticType> INTERACT_WITH_STONECUTTER = RegistryKey.unsafeOf("interact_with_stonecutter");
+    RegistryKey<StatisticType> TOTAL_WORLD_TIME = RegistryKey.of("total_world_time");
 
-    RegistryKey<StatisticType> BELL_RING = RegistryKey.unsafeOf("bell_ring");
+    RegistryKey<StatisticType> TRADED_WITH_VILLAGER = RegistryKey.of("traded_with_villager");
 
-    RegistryKey<StatisticType> RAID_TRIGGER = RegistryKey.unsafeOf("raid_trigger");
+    RegistryKey<StatisticType> TRIGGER_TRAPPED_CHEST = RegistryKey.of("trigger_trapped_chest");
 
-    RegistryKey<StatisticType> RAID_WIN = RegistryKey.unsafeOf("raid_win");
+    RegistryKey<StatisticType> TUNE_NOTEBLOCK = RegistryKey.of("tune_noteblock");
 
-    RegistryKey<StatisticType> INTERACT_WITH_ANVIL = RegistryKey.unsafeOf("interact_with_anvil");
+    RegistryKey<StatisticType> USE_CAULDRON = RegistryKey.of("use_cauldron");
 
-    RegistryKey<StatisticType> INTERACT_WITH_GRINDSTONE = RegistryKey.unsafeOf("interact_with_grindstone");
+    RegistryKey<StatisticType> WALK_ON_WATER_ONE_CM = RegistryKey.of("walk_on_water_one_cm");
 
-    RegistryKey<StatisticType> TARGET_HIT = RegistryKey.unsafeOf("target_hit");
+    RegistryKey<StatisticType> WALK_ONE_CM = RegistryKey.of("walk_one_cm");
 
-    RegistryKey<StatisticType> INTERACT_WITH_SMITHING_TABLE = RegistryKey.unsafeOf("interact_with_smithing_table");
+    RegistryKey<StatisticType> WALK_UNDER_WATER_ONE_CM = RegistryKey.of("walk_under_water_one_cm");
 }

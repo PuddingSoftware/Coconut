@@ -20,7 +20,13 @@ import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.Unmodifiable;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Set;
 import java.util.function.Function;
 import java.util.function.Supplier;
 
@@ -31,13 +37,16 @@ final class CodecImpl {
         RawValueImpl {
             Objects.requireNonNull(coder, "coder");
             Objects.requireNonNull(value, "value");
+            // Only the data format matters here. Keeping a proxy would retain its context, such as a registry context
+            // that is still loading, and make equal values from different contexts compare unequal.
+            coder = TranscoderProxy.extractDelegate(coder);
         }
 
         @Override
+        @SuppressWarnings("unchecked")
         public <D1> Result<D1> convertTo(Transcoder<D1> coder) {
             // If the two transcoders are the same instance, we can immediately return the value.
-            if (TranscoderProxy.extractDelegate(this.coder) == TranscoderProxy.extractDelegate(coder))
-                //noinspection unchecked
+            if (this.coder == TranscoderProxy.extractDelegate(coder))
                 return new Result.Ok<>((D1) value);
             return this.coder.convertTo(coder, value);
         }
@@ -430,7 +439,6 @@ final class CodecImpl {
                 return new Result.Error<>("Missing registries in transcoder");
             final var registry = registrySelector.select(context.registries());
 
-            //noinspection unchecked
             final StructCodec<T> innerCodec = (StructCodec<T>) valueToCodec.apply(value);
             final RegistryKey<StructCodec<? extends T>> type = registry.getKey(innerCodec);
             if (type == null) return new Result.Error<>("Unregistered serializer for: " + value);

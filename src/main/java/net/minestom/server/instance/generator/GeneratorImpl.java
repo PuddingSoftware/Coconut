@@ -2,7 +2,6 @@ package net.minestom.server.instance.generator;
 
 import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
-import net.minestom.server.coordinate.Area;
 import net.minestom.server.coordinate.BlockVec;
 import net.minestom.server.coordinate.Point;
 import net.minestom.server.instance.block.Block;
@@ -20,7 +19,12 @@ import java.util.Objects;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.function.Consumer;
 
-import static net.minestom.server.coordinate.CoordConversion.*;
+import static net.minestom.server.coordinate.CoordConversion.SECTION_SIZE;
+import static net.minestom.server.coordinate.CoordConversion.ceilSection;
+import static net.minestom.server.coordinate.CoordConversion.chunkBlockIndex;
+import static net.minestom.server.coordinate.CoordConversion.floorSection;
+import static net.minestom.server.coordinate.CoordConversion.globalToChunk;
+import static net.minestom.server.coordinate.CoordConversion.globalToSectionRelative;
 
 @ApiStatus.Internal
 public final class GeneratorImpl {
@@ -86,7 +90,8 @@ public final class GeneratorImpl {
         final DynamicRegistry<Biome> biomeRegistry;
         @Nullable Fork fork;
 
-        record Fork(BlockVec minSection, int width, int height, int depth, List<GenerationUnit> sections) {}
+        record Fork(BlockVec minSection, int width, int height, int depth, List<GenerationUnit> sections) {
+        }
 
         DynamicFork(DynamicRegistry<Biome> biomeRegistry) {
             this.biomeRegistry = biomeRegistry;
@@ -328,8 +333,8 @@ public final class GeneratorImpl {
             }
         }
 
-        private boolean requireCache(Block block) {
-            return block.hasNbt() || block.handler() != null || block.registry().isBlockEntity();
+        private static boolean requireCache(Block block) {
+            return block.hasNbt() || block.handler() != null || block.blockEntityType() != null;
         }
 
         private void fillRelative(int minX, int minY, int minZ, int maxX, int maxY, int maxZ, Block block) {
@@ -453,8 +458,8 @@ public final class GeneratorImpl {
                 }
             }
             // Middle sections (to fill)
-            final int startSection = (minMultiple) / SECTION_SIZE + (startOffset ? 1 : 0);
-            final int endSection = (maxMultiple) / SECTION_SIZE + (endOffset ? -1 : 0);
+            final int startSection = minMultiple / SECTION_SIZE + (startOffset ? 1 : 0);
+            final int endSection = maxMultiple / SECTION_SIZE + (endOffset ? -1 : 0);
             for (int i = startSection; i < endSection; i++) {
                 for (int x = 0; x < width; x++) {
                     for (int z = 0; z < depth; z++) {

@@ -1,9 +1,9 @@
 package net.minestom.server.instance;
 
-import net.minestom.server.ServerFlag;
 import net.minestom.server.coordinate.ChunkRange;
 import net.minestom.server.coordinate.Pos;
 import net.minestom.server.network.packet.server.play.ChunkDataPacket;
+import net.minestom.server.property.ServerProperties;
 import net.minestom.testing.Env;
 import net.minestom.testing.EnvTest;
 import org.junit.jupiter.api.Test;
@@ -11,6 +11,7 @@ import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertSame;
 
 @EnvTest
 public class ChunkViewerIntegrationTest {
@@ -35,9 +36,20 @@ public class ChunkViewerIntegrationTest {
         assertEquals(player, chunk.getViewers().iterator().next());
     }
 
+    // Regression test: a chunk can get cached between a caller's cache miss and its
+    // loading registration, retrieveChunk must then return the cached chunk instead
+    // of loading a duplicate that viewers would no longer be registered on
+    @Test
+    public void retrieveAlreadyCachedChunk(Env env) {
+        InstanceContainer instance = (InstanceContainer) env.createFlatInstance();
+        Chunk chunk = instance.loadChunk(0, 0).join();
+        Chunk retrieved = instance.retrieveChunk(0, 0).join();
+        assertSame(chunk, retrieved);
+    }
+
     @Test
     public void renderDistance(Env env) {
-        final int viewRadius = ServerFlag.CHUNK_VIEW_DISTANCE;
+        final int viewRadius = ServerProperties.CHUNK_VIEW_DISTANCE.get();
         var instance = env.createFlatInstance();
         var connection = env.createConnection();
         // Check initial load

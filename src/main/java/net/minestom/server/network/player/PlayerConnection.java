@@ -49,7 +49,9 @@ public abstract class PlayerConnection {
     private @Nullable PlayerPublicKey playerPublicKey;
     volatile boolean online;
     private volatile boolean wasTransferred;
+    private boolean statusRequestReceived;
 
+    @SuppressWarnings("this-escape") // deliberate self registration during construction
     private @Nullable LoginPluginMessageProcessor loginPluginMessageProcessor = new LoginPluginMessageProcessor(this);
 
     private @Nullable CompletableFuture<List<SelectKnownPacksPacket.Entry>> knownPacksFuture = null; // Present only when waiting for a response from the client.
@@ -82,7 +84,7 @@ public abstract class PlayerConnection {
      */
     public abstract void sendPacket(SendablePacket packet);
 
-    public void sendPackets(Collection<SendablePacket> packets) {
+    public void sendPackets(Collection<? extends SendablePacket> packets) {
         packets.forEach(this::sendPacket);
     }
 
@@ -194,6 +196,18 @@ public abstract class PlayerConnection {
     }
 
     /**
+     * Marks the single status request permitted during a server-list ping exchange.
+     *
+     * @return {@code true} for the first request, {@code false} for duplicates
+     */
+    @ApiStatus.Internal
+    public boolean markStatusRequestReceived() {
+        if (statusRequestReceived) return false;
+        statusRequestReceived = true;
+        return true;
+    }
+
+    /**
      * @deprecated Use {@link #getClientState()} or {@link #getServerState()} instead.
      */
     @Deprecated(forRemoval = true)
@@ -272,7 +286,9 @@ public abstract class PlayerConnection {
     public CompletableFuture<List<SelectKnownPacksPacket.Entry>> requestKnownPacks(List<SelectKnownPacksPacket.Entry> serverPacks) {
         Check.stateCondition(knownPacksFuture != null, "Known packs already pending");
         sendPacket(new SelectKnownPacksPacket(serverPacks));
-        return knownPacksFuture = new CompletableFuture<>();
+        final CompletableFuture<List<SelectKnownPacksPacket.Entry>> future = new CompletableFuture<>();
+        this.knownPacksFuture = future;
+        return future;
     }
 
     @ApiStatus.Internal

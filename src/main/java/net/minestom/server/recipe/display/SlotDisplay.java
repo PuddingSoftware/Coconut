@@ -5,8 +5,10 @@ import net.minestom.server.adventure.ComponentHolder;
 import net.minestom.server.component.DataComponent;
 import net.minestom.server.item.ItemStackTemplate;
 import net.minestom.server.item.Material;
+import net.minestom.server.item.armor.TrimPattern;
 import net.minestom.server.network.NetworkBuffer;
 import net.minestom.server.network.NetworkBufferTemplate;
+import net.minestom.server.registry.Holder;
 import net.minestom.server.registry.TagKey;
 
 import java.util.ArrayList;
@@ -62,7 +64,7 @@ public sealed interface SlotDisplay extends ComponentHolder<SlotDisplay> {
                 ItemStack::new);
 
         @Override
-        public Collection<Component> components() {
+        public List<Component> components() {
             return net.minestom.server.item.ItemStack.textComponents(itemStack);
         }
 
@@ -88,19 +90,20 @@ public sealed interface SlotDisplay extends ComponentHolder<SlotDisplay> {
     record SmithingTrim(
             SlotDisplay base,
             SlotDisplay trimMaterial,
-            SlotDisplay trimPattern
+            Holder<TrimPattern> trimPattern
     ) implements SlotDisplay {
         public static final NetworkBuffer.Type<SmithingTrim> NETWORK_TYPE = NetworkBufferTemplate.template(
                 SlotDisplay.NETWORK_TYPE, SmithingTrim::base,
                 SlotDisplay.NETWORK_TYPE, SmithingTrim::trimMaterial,
-                SlotDisplay.NETWORK_TYPE, SmithingTrim::trimPattern,
+                TrimPattern.NETWORK_TYPE, SmithingTrim::trimPattern,
                 SmithingTrim::new);
 
         @Override
-        public Collection<Component> components() {
+        public List<Component> components() {
             final var components = new ArrayList<>(base.components());
             components.addAll(trimMaterial.components());
-            components.addAll(trimPattern.components());
+            final TrimPattern pattern = trimPattern.asValue();
+            if (pattern != null) components.add(pattern.description());
             return List.copyOf(components);
         }
 
@@ -108,7 +111,9 @@ public sealed interface SlotDisplay extends ComponentHolder<SlotDisplay> {
         public SlotDisplay copyWithOperator(UnaryOperator<Component> operator) {
             return new SmithingTrim(base.copyWithOperator(operator),
                     trimMaterial.copyWithOperator(operator),
-                    trimPattern.copyWithOperator(operator));
+                    trimPattern instanceof TrimPattern pattern
+                            ? TrimPattern.create(pattern.assetId(), operator.apply(pattern.description()), pattern.isDecal())
+                            : trimPattern);
         }
     }
 
@@ -119,7 +124,7 @@ public sealed interface SlotDisplay extends ComponentHolder<SlotDisplay> {
                 WithRemainder::new);
 
         @Override
-        public Collection<Component> components() {
+        public List<Component> components() {
             final var components = new ArrayList<>(input.components());
             components.addAll(remainder.components());
             return List.copyOf(components);
@@ -141,7 +146,7 @@ public sealed interface SlotDisplay extends ComponentHolder<SlotDisplay> {
         }
 
         @Override
-        public Collection<Component> components() {
+        public List<Component> components() {
             final var components = new ArrayList<Component>();
             for (var display : contents)
                 components.addAll(display.components());

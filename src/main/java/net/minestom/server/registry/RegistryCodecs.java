@@ -4,11 +4,18 @@ import net.kyori.adventure.key.Key;
 import net.minestom.server.codec.Codec;
 import net.minestom.server.codec.Result;
 import net.minestom.server.codec.Transcoder;
+import net.minestom.server.registry.RegistryTagImpl.Backed;
+import net.minestom.server.registry.RegistryTagImpl.Direct;
+import net.minestom.server.registry.RegistryTagImpl.Empty;
 import net.minestom.server.utils.Either;
 import org.intellij.lang.annotations.Subst;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Objects;
+import java.util.Set;
 
 final class RegistryCodecs {
 
@@ -49,13 +56,13 @@ final class RegistryCodecs {
         }
 
         @Override
+        @SuppressWarnings("unchecked")
         public <D> Result<Holder<T>> decode(Transcoder<D> coder, D value) {
             if (!(coder instanceof RegistryTranscoder<D> context))
                 return new Result.Error<>("Missing registries in transcoder");
             final var registry = selector.select(context.registries());
             final Result<T> directResult = registryCodec.decode(coder, value);
             if (directResult instanceof Result.Ok(T direct))
-                //noinspection unchecked
                 return new Result.Ok<>((Holder<T>) direct);
             final Result<String> referenceResult = coder.getString(value);
             if (!(referenceResult instanceof Result.Ok(@Subst("a")String reference)))
@@ -77,7 +84,7 @@ final class RegistryCodecs {
         }
     }
 
-    record TagKeyImpl<T>(Registries.Selector<T> selector, boolean hash) implements Codec<TagKey<T>> {
+    record TagKeyImpl<T>(Registries.Selector<T> selector) implements Codec<TagKey<T>> {
         TagKeyImpl {
             Objects.requireNonNull(selector, "selector");
         }
@@ -90,11 +97,6 @@ final class RegistryCodecs {
             final var result = coder.getString(value);
             if (!(result instanceof Result.Ok(@Subst("a")String reference)))
                 return result.cast();
-            if (hash) {
-                if (reference.length() < 2 || reference.charAt(0) != '#')
-                    return new Result.Error<>("Invalid tag hash: " + reference);
-                reference = reference.substring(1);
-            }
             final TagKey<T> tagKey = new net.minestom.server.registry.TagKeyImpl<>(Key.key(reference));
             if (registry.getTag(tagKey) == null)
                 return new Result.Error<>("Unknown tag " + reference + " for registry " + registry.key());
@@ -106,7 +108,7 @@ final class RegistryCodecs {
             if (value == null) return new Result.Error<>("null");
             if (!(coder instanceof RegistryTranscoder<D>))
                 return new Result.Error<>("Missing registries in transcoder");
-            return new Result.Ok<>(coder.createString(hash ? value.hashedKey() : value.key().asString()));
+            return new Result.Ok<>(coder.createString(value.key().asString()));
         }
     }
 
@@ -128,7 +130,7 @@ final class RegistryCodecs {
                     return tag != null ? new Result.Ok<>(tag)
                             : new Result.Error<>("Unknown tag " + tagKey + " for registry " + registry.key());
                 }
-                return new Result.Ok<>(RegistryTag.direct(RegistryKey.unsafeOf(tagKeyStr)));
+                return new Result.Ok<>(RegistryTag.direct(RegistryKey.of(tagKeyStr)));
             }
             final Result<List<D>> entriesResult = coder.getList(value);
             if (entriesResult instanceof Result.Ok(List<D> entries)) {
@@ -137,7 +139,7 @@ final class RegistryCodecs {
                     final Result<String> keyResult = coder.getString(entry);
                     if (!(keyResult instanceof Result.Ok(@Subst("a")String key)))
                         return keyResult.mapError(e -> "Invalid tag entry: " + e).cast();
-                    final RegistryKey<T> registryKey = registry != null ? registry.getKey(Key.key(key)) : RegistryKey.unsafeOf(key);
+                    final RegistryKey<T> registryKey = registry != null ? registry.getKey(Key.key(key)) : RegistryKey.of(key);
                     if (registryKey == null)
                         return new Result.Error<>("Unknown key " + key + " for registry " + registry.key());
                     keys.add(registryKey);
@@ -152,10 +154,10 @@ final class RegistryCodecs {
         public <D> Result<D> encode(Transcoder<D> coder, @Nullable RegistryTag<T> value) {
             if (value == null) return new Result.Error<>("null");
             return switch (value) {
-                case net.minestom.server.registry.RegistryTagImpl.Backed<T> backed ->
+                case Backed<T> backed ->
                         new Result.Ok<>(coder.createString(backed.key().hashedKey()));
-                case net.minestom.server.registry.RegistryTagImpl.Empty() -> new Result.Ok<>(coder.emptyList());
-                case net.minestom.server.registry.RegistryTagImpl.Direct(var entries) -> {
+                case Empty() -> new Result.Ok<>(coder.emptyList());
+                case Direct(var entries) -> {
                     if (entries.isEmpty()) yield new Result.Ok<>(coder.emptyList());
                     if (entries.size() == 1)
                         yield new Result.Ok<>(coder.createString(entries.getFirst().key().asString()));
@@ -177,6 +179,7 @@ final class RegistryCodecs {
             Objects.requireNonNull(directCodec, "directCodec");
         }
         @Override
+        @SuppressWarnings({"unchecked", "rawtypes"}) // heterogeneous holder entries by design
         public <D> Result<HolderSet<T>> decode(Transcoder<D> coder, D value) {
             // First try to decode as a tag
             final Result<RegistryTag<T>> tagResult = tagCodec.decode(coder, value);
@@ -204,6 +207,7 @@ final class RegistryCodecs {
         }
 
         @Override
+        @SuppressWarnings({"unchecked", "rawtypes"}) // heterogeneous holder entries by design
         public <D> Result<D> encode(Transcoder<D> coder, @Nullable HolderSet<T> value) {
             if (value == null) return new Result.Error<>("null");
             return switch (value) {
@@ -214,6 +218,7 @@ final class RegistryCodecs {
                 case HolderSet.Direct d -> {
                     final Transcoder.ListBuilder<D> result = coder.createList(d.values().size());
                     for (final Object rawValue : d.values()) {
+                        @SuppressWarnings("unchecked")
                         final var directResult = directCodec.encode(coder, (T) rawValue);
                         if (directResult instanceof Result.Ok(D direct)) {
                             result.add(direct);

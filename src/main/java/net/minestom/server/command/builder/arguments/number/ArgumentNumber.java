@@ -7,11 +7,8 @@ import net.minestom.server.command.builder.exception.ArgumentSyntaxException;
 import net.minestom.server.network.NetworkBuffer;
 import org.jetbrains.annotations.Nullable;
 
-import java.math.BigDecimal;
 import java.util.Comparator;
-import java.util.function.BiFunction;
 import java.util.function.Function;
-import java.util.regex.Pattern;
 
 public class ArgumentNumber<T extends Number> extends Argument<T> {
 
@@ -23,17 +20,14 @@ public class ArgumentNumber<T extends Number> extends Argument<T> {
     protected T min, max;
 
     protected final ArgumentParserType parserName;
-    protected final BiFunction<String, Integer, T> radixParser;
     protected final Function<String, T> parser;
     protected final NetworkBuffer.Type<T> networkType;
     protected final Comparator<T> comparator;
 
     ArgumentNumber(String id, ArgumentParserType parserName, Function<String, T> parser,
-                   BiFunction<String, Integer, T> radixParser, NetworkBuffer.Type<T> networkType,
-                   Comparator<T> comparator) {
+                   NetworkBuffer.Type<T> networkType, Comparator<T> comparator) {
         super(id);
         this.parserName = parserName;
-        this.radixParser = radixParser;
         this.parser = parser;
         this.networkType = networkType;
         this.comparator = comparator;
@@ -42,13 +36,7 @@ public class ArgumentNumber<T extends Number> extends Argument<T> {
     @Override
     public T parse(CommandSender sender, String input) throws ArgumentSyntaxException {
         try {
-            final T value;
-            final int radix = getRadix(input);
-            if (radix == 10) {
-                value = parser.apply(parseValue(input));
-            } else {
-                value = radixParser.apply(parseValue(input), radix);
-            }
+            final T value = parser.apply(input);
 
             // Check range
             if (hasMin && comparator.compare(value, min) < 0) {
@@ -59,7 +47,7 @@ public class ArgumentNumber<T extends Number> extends Argument<T> {
             }
 
             return value;
-        } catch (NumberFormatException | NullPointerException e) {
+        } catch (NumberFormatException | NullPointerException _) {
             throw new ArgumentSyntaxException("Input is not a number, or it's invalid for the given type", input, NOT_NUMBER_ERROR);
         }
     }
@@ -149,35 +137,5 @@ public class ArgumentNumber<T extends Number> extends Argument<T> {
      */
     public T getMax() {
         return max;
-    }
-
-    protected String parseValue(String value) {
-        if (value.startsWith("0b")) {
-            value = value.replaceFirst(Pattern.quote("0b"), "");
-        } else if (value.startsWith("0x")) {
-            value = value.replaceFirst(Pattern.quote("0x"), "");
-        } else if (value.toLowerCase().contains("e")) {
-            value = removeScientificNotation(value);
-        }
-        // TODO number suffix support (k,m,b,t)
-        return value;
-    }
-
-    protected int getRadix(String value) {
-        if (value.startsWith("0b")) {
-            return 2;
-        } else if (value.startsWith("0x")) {
-            return 16;
-        }
-        return 10;
-    }
-
-    @Nullable
-    protected String removeScientificNotation(String value) {
-        try {
-            return new BigDecimal(value).toPlainString();
-        } catch (NumberFormatException e) {
-            return null;
-        }
     }
 }

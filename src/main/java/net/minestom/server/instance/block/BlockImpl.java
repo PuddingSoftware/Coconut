@@ -16,8 +16,14 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.UnknownNullability;
 import org.jetbrains.annotations.Unmodifiable;
 
-import java.util.*;
+import java.util.AbstractList;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
 
+@SuppressWarnings("removal")
 record BlockImpl(RegistryData.BlockEntry registry,
                  long propertiesArray,
                  @Nullable CompoundBinaryTag nbt,
@@ -68,8 +74,7 @@ record BlockImpl(RegistryData.BlockEntry registry,
                             int i = 0;
                             for (var entry : stateProperties) {
                                 final var k = entry.getKey();
-                                @SuppressWarnings("unchecked")
-                                final var v = (List<String>) entry.getValue();
+                                @SuppressWarnings("unchecked") final var v = (List<String>) entry.getValue();
                                 assert v.size() < MAX_VALUES;
                                 final PropertyTypeKey propertyTypeKey = new PropertyTypeKey(k, v);
                                 propertyTypes[i++] = propertyTypeCache.computeIfAbsent(propertyTypeKey,
@@ -99,8 +104,7 @@ record BlockImpl(RegistryData.BlockEntry registry,
                         Arrays.fill(stateIds, -1);
                         for (var stateEntry : stateObject) {
                             final String query = stateEntry.getKey();
-                            @SuppressWarnings("unchecked")
-                            final var stateOverride = (Map<String, Object>) stateEntry.getValue();
+                            @SuppressWarnings("unchecked") final var stateOverride = (Map<String, Object>) stateEntry.getValue();
                             final var propertyMap = BlockUtils.parseProperties(query);
                             if (propertyTypes.length != propertyMap.size()) {
                                 throw new IllegalStateException("Invalid property count for block state " + namespace + query);
@@ -108,7 +112,7 @@ record BlockImpl(RegistryData.BlockEntry registry,
                             long propertiesValue = 0;
                             for (Map.Entry<String, String> entry : propertyMap.entrySet()) {
                                 final byte keyIndex = loadingSchema.findKeyIndexThrow(entry.getKey(), null);
-                                final byte valueIndex = loadingSchema.findValueIndexThrow(propertyTypes[keyIndex], entry.getValue(), null);
+                                final byte valueIndex = BlockSchema.findValueIndexThrow(propertyTypes[keyIndex], entry.getValue(), null);
                                 propertiesValue = updateIndex(propertiesValue, keyIndex, valueIndex);
                             }
 
@@ -161,7 +165,7 @@ record BlockImpl(RegistryData.BlockEntry registry,
         final Map<String, String> propertyMap = BlockUtils.parseProperties(query);
         try {
             return block.withProperties(propertyMap);
-        } catch (IllegalArgumentException e) {
+        } catch (IllegalArgumentException _) {
             return null;
         }
     }
@@ -170,7 +174,7 @@ record BlockImpl(RegistryData.BlockEntry registry,
     public Block withProperty(String property, String value) {
         final BlockSchema schema = schema();
         final byte keyIndex = schema.findKeyIndexThrow(property, this);
-        final byte valueIndex = schema.findValueIndexThrow(schema.properties[keyIndex], value, this);
+        final byte valueIndex = BlockSchema.findValueIndexThrow(schema.properties[keyIndex], value, this);
         final long updatedProperties = updateIndex(propertiesArray, keyIndex, valueIndex);
         return compute(updatedProperties);
     }
@@ -182,7 +186,7 @@ record BlockImpl(RegistryData.BlockEntry registry,
         long updatedProperties = this.propertiesArray;
         for (Map.Entry<String, String> entry : properties.entrySet()) {
             final byte keyIndex = schema.findKeyIndexThrow(entry.getKey(), this);
-            final byte valueIndex = schema.findValueIndexThrow(schema.properties[keyIndex], entry.getValue(), this);
+            final byte valueIndex = BlockSchema.findValueIndexThrow(schema.properties[keyIndex], entry.getValue(), this);
             updatedProperties = updateIndex(updatedProperties, keyIndex, valueIndex);
         }
         return compute(updatedProperties);
@@ -236,7 +240,7 @@ record BlockImpl(RegistryData.BlockEntry registry,
     }
 
     @Override
-    public Collection<Block> possibleStates() {
+    public List<Block> possibleStates() {
         final BlockSchema schema = schema();
         if (schema.properties.length == 0) return List.of(defaultState());
         return new AbstractList<>() {
@@ -376,7 +380,7 @@ record BlockImpl(RegistryData.BlockEntry registry,
             return index;
         }
 
-        private byte findValueIndexThrow(PropertyType propertyType, String value, @Nullable BlockImpl block) {
+        private static byte findValueIndexThrow(PropertyType propertyType, String value, @Nullable BlockImpl block) {
             final byte index = propertyType.findValueIndex(value);
             if (index == -1) {
                 if (block != null) {

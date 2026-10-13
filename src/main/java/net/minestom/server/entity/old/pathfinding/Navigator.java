@@ -12,8 +12,6 @@ import net.minestom.server.entity.old.pathfinding.generators.NodeGenerator;
 import net.minestom.server.instance.Chunk;
 import net.minestom.server.instance.Instance;
 import net.minestom.server.instance.WorldBorder;
-import net.minestom.server.network.packet.server.play.ParticlePacket;
-import net.minestom.server.particle.Particle;
 import net.minestom.server.utils.chunk.ChunkUtils;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nullable;
@@ -25,12 +23,12 @@ import java.util.function.Supplier;
  * Necessary object for all {@link NavigableEntity}.
  */
 public final class Navigator {
-    private Point goalPosition;
+    private @Nullable Point goalPosition;
     private final Entity entity;
 
     // Essentially a double buffer. Wait until a path is done computing before replacing the old one.
-    private PPath computingPath;
-    private PPath path;
+    private @Nullable PPath computingPath;
+    private @Nullable PPath path;
 
     private double minimumDistance;
 
@@ -122,7 +120,7 @@ public final class Navigator {
     @ApiStatus.Internal
     public synchronized void tick() {
         if (goalPosition == null) return; // No path
-        if (entity instanceof LivingEntity && ((LivingEntity) entity).isDead())
+        if (entity instanceof LivingEntity livingEntity && livingEntity.isDead())
             return; // No pathfinding tick for dead entities
         if (computingPath != null && (computingPath.getState() == PPath.State.COMPUTED || computingPath.getState() == PPath.State.BEST_EFFORT)) {
             path = computingPath;

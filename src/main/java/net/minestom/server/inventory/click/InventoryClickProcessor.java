@@ -86,7 +86,7 @@ public final class InventoryClickProcessor {
 
     public InventoryClickResult changeHeld(ItemStack clicked, ItemStack cursor) {
         // swap the cursor item and the held item
-        return new InventoryClickResult(cursor, clicked);
+        return new InventoryClickResult(/* clicked= */ cursor, /* cursor= */ clicked);
     }
 
     public InventoryClickResult shiftClick(AbstractInventory inventory,
@@ -108,7 +108,7 @@ public final class InventoryClickProcessor {
             if (equippableComponent != null) {
                 final EquipmentSlot equipmentSlot = equippableComponent.slot();
                 RegistryTag<EntityType> allowed = equippableComponent.allowedEntities();
-                if ((allowed == null || allowed.contains(EntityType.PLAYER))
+                if ((allowed == null || allowed.contains(EntityType.PLAYER.registryKey()))
                         && (equipmentSlot.isArmor() || equipmentSlot == EquipmentSlot.OFF_HAND)
                         && !craftingGridClick) {
                     // Shift-click equip

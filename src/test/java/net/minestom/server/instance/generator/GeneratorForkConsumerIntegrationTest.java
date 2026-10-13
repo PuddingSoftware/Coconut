@@ -10,7 +10,9 @@ import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicReference;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
 
 @EnvTest
 public class GeneratorForkConsumerIntegrationTest {
@@ -22,7 +24,7 @@ public class GeneratorForkConsumerIntegrationTest {
         AtomicReference<Exception> failed = new AtomicReference<>();
         instance.setGenerator(unit -> {
             try {
-                unit.fork(setter -> {
+                unit.fork(_ -> {
                 });
             } catch (Exception e) {
                 failed.set(e);

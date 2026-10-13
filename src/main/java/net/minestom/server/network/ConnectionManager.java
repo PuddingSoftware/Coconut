@@ -3,7 +3,6 @@ package net.minestom.server.network;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.NamedTextColor;
 import net.minestom.server.MinecraftServer;
-import net.minestom.server.ServerFlag;
 import net.minestom.server.entity.Player;
 import net.minestom.server.event.EventDispatcher;
 import net.minestom.server.event.player.AsyncPlayerConfigurationEvent;
@@ -23,6 +22,7 @@ import net.minestom.server.network.player.GameProfile;
 import net.minestom.server.network.player.PlayerConnection;
 import net.minestom.server.network.player.PlayerSocketConnection;
 import net.minestom.server.network.plugin.LoginPluginMessageProcessor;
+import net.minestom.server.property.ServerProperties;
 import net.minestom.server.registry.Registries;
 import net.minestom.server.registry.StaticProtocolObject;
 import net.minestom.server.utils.StringUtils;
@@ -33,8 +33,21 @@ import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.*;
-import java.util.concurrent.*;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.List;
+import java.util.Locale;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Set;
+import java.util.UUID;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.CopyOnWriteArraySet;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 import java.util.function.Function;
 
 /**
@@ -45,8 +58,10 @@ public final class ConnectionManager {
 
     private static final Component TIMEOUT_TEXT = Component.text("Timeout", NamedTextColor.RED);
     private static final Component SHUTDOWN_TEXT = Component.text("Server shutting down");
+    private static final Component SPAWN_ERROR_TEXT = Component.text("Error during spawn!", NamedTextColor.RED);
 
-    private final CachedPacket cachedTagsPacket = new CachedPacket(() -> Registries.tagsPacket(MinecraftServer.process()));
+    private final CachedPacket cachedTagsPacket =
+            new CachedPacket(() -> Registries.tagsPacket(MinecraftServer.getRegistries()));
 
     // All players once their Player object has been instantiated.
     private final Map<PlayerConnection, Player> connectionPlayerMap = new ConcurrentHashMap<>();
@@ -83,14 +98,14 @@ public final class ConnectionManager {
     /**
      * Returns an unmodifiable set containing the players currently in the play state.
      */
-    public Collection<Player> getOnlinePlayers() {
+    public Set<Player> getOnlinePlayers() {
         return unmodifiablePlayPlayers;
     }
 
     /**
      * Returns an unmodifiable set containing the players currently in the configuration state.
      */
-    public Collection<Player> getConfigPlayers() {
+    public Set<Player> getConfigPlayers() {
         return unmodifiableConfigurationPlayers;
     }
 
@@ -171,7 +186,7 @@ public final class ConnectionManager {
 
     @ApiStatus.Internal
     public Player createPlayer(PlayerConnection connection, GameProfile gameProfile) {
-        assert ServerFlag.INSIDE_TEST || Thread.currentThread().isVirtual();
+        assert ServerProperties.INSIDE_TEST.get() || Thread.currentThread().isVirtual();
         final Player player = playerProvider.createPlayer(connection, gameProfile);
         this.connectionPlayerMap.put(connection, player);
         return player;
@@ -189,7 +204,7 @@ public final class ConnectionManager {
     }
 
     public GameProfile transitionLoginToConfig(PlayerConnection connection, GameProfile gameProfile) {
-        assert ServerFlag.INSIDE_TEST || Thread.currentThread().isVirtual();
+        assert ServerProperties.INSIDE_TEST.get() || Thread.currentThread().isVirtual();
         // Compression
         if (connection instanceof PlayerSocketConnection socketConnection) {
             final int threshold = MinecraftServer.getCompressionThreshold();
@@ -204,10 +219,14 @@ public final class ConnectionManager {
         gameProfile = asyncPlayerPreLoginEvent.getGameProfile();
         // Wait for pending login plugin messages
         try {
-            pluginMessageProcessor.awaitReplies(ServerFlag.LOGIN_PLUGIN_MESSAGE_TIMEOUT, TimeUnit.MILLISECONDS);
+            pluginMessageProcessor.awaitReplies(ServerProperties.LOGIN_PLUGIN_MESSAGE_TIMEOUT.get(), TimeUnit.MILLISECONDS);
         } catch (Throwable t) {
             connection.kick(LoginListener.INVALID_PROXY_RESPONSE);
             throw new RuntimeException("Error getting replies for login plugin messages", t);
+        }
+        // Publish the final profile before the client could possibly respond
+        if (connection instanceof PlayerSocketConnection socketConnection) {
+            socketConnection.UNSAFE_setProfile(gameProfile);
         }
         // Send login success packet (and switch to configuration phase)
         connection.sendPacket(new LoginSuccessPacket(gameProfile, new UUID(0L, 0L)));
@@ -224,7 +243,7 @@ public final class ConnectionManager {
      */
     @ApiStatus.Internal
     public void doConfiguration(Player player, boolean isFirstConfig) {
-        assert ServerFlag.INSIDE_TEST || Thread.currentThread().isVirtual();
+        assert ServerProperties.INSIDE_TEST.get() || Thread.currentThread().isVirtual();
         if (isFirstConfig) {
             configurationPlayers.add(player);
             keepAlivePlayers.add(player);
@@ -249,8 +268,8 @@ public final class ConnectionManager {
         if (event.willSendRegistryData()) {
             List<SelectKnownPacksPacket.Entry> knownPacks;
             try {
-                knownPacks = knownPacksFuture.get(ServerFlag.KNOWN_PACKS_RESPONSE_TIMEOUT, TimeUnit.MILLISECONDS);
-            } catch (InterruptedException | TimeoutException e) {
+                knownPacks = knownPacksFuture.get(ServerProperties.KNOWN_PACKS_RESPONSE_TIMEOUT.get(), TimeUnit.MILLISECONDS);
+            } catch (InterruptedException | TimeoutException _) {
                 LOGGER.warn("Player {} failed to respond to known packs query", player.getUsername());
                 player.getPlayerConnection().disconnect();
                 return;
@@ -259,7 +278,7 @@ public final class ConnectionManager {
             }
             boolean excludeVanilla = knownPacks.contains(SelectKnownPacksPacket.MINECRAFT_CORE);
 
-            Registries registries = MinecraftServer.process();
+            Registries registries = MinecraftServer.getRegistries();
             player.sendPackets(Registries.registryDataPackets(registries, excludeVanilla));
             // TODO: TEST_ENVIRONMENT, TEST_INSTANCE
 
@@ -338,20 +357,25 @@ public final class ConnectionManager {
         });
         this.playWaitingPlayers.drain(player -> {
             if (!player.isOnline()) return; // Player disconnected while in queued to join
-            configurationPlayers.remove(player);
-            playPlayers.add(player);
-            keepAlivePlayers.add(player);
+            try {
+                configurationPlayers.remove(player);
+                playPlayers.add(player);
+                keepAlivePlayers.add(player);
 
-            // This fixes a bug with Geyser. They do not reply to keep alive during config, meaning that
-            // `Player#didAnswerKeepAlive()` will always be false when entering the play state, so a new keep
-            // alive will never be sent and they will disconnect themselves or we will kick them for not replying.
-            player.refreshAnswerKeepAlive(true);
+                // This fixes a bug with Geyser. They do not reply to keep alive during config, meaning that
+                // `Player#didAnswerKeepAlive()` will always be false when entering the play state, so a new keep
+                // alive will never be sent and they will disconnect themselves or we will kick them for not replying.
+                player.refreshAnswerKeepAlive(true);
 
-            // Spawn the player at Player#getRespawnPoint
-            CompletableFuture<Void> spawnFuture = player.UNSAFE_init();
+                // Spawn the player at Player#getRespawnPoint
+                CompletableFuture<Void> spawnFuture = player.UNSAFE_init();
 
-            // Required to get the exact moment the player spawns
-            if (ServerFlag.INSIDE_TEST) spawnFuture.join();
+                // Required to get the exact moment the player spawns
+                if (ServerProperties.INSIDE_TEST.get()) spawnFuture.join();
+            } catch (Throwable t) {
+                player.kick(SPAWN_ERROR_TEXT);
+                MinecraftServer.getExceptionManager().handleException(t);
+            }
         });
     }
 
@@ -360,14 +384,14 @@ public final class ConnectionManager {
      *
      * @param tickStart the time of the update in nanoseconds, forwarded to the packet
      */
-    private void handleKeepAlive(Collection<Player> playerGroup, long tickStart) {
+    private static void handleKeepAlive(Collection<Player> playerGroup, long tickStart) {
         final KeepAlivePacket keepAlivePacket = new KeepAlivePacket(tickStart);
         for (Player player : playerGroup) {
             final long lastKeepAlive = tickStart - player.getLastKeepAlive();
-            if (lastKeepAlive > TimeUnit.MILLISECONDS.toNanos(ServerFlag.KEEP_ALIVE_DELAY) && player.didAnswerKeepAlive()) {
+            if (lastKeepAlive > TimeUnit.MILLISECONDS.toNanos(ServerProperties.KEEP_ALIVE_DELAY.get()) && player.didAnswerKeepAlive()) {
                 player.refreshKeepAlive(tickStart);
                 player.sendPacket(keepAlivePacket);
-            } else if (lastKeepAlive >= TimeUnit.MILLISECONDS.toNanos(ServerFlag.KEEP_ALIVE_KICK)) {
+            } else if (lastKeepAlive >= TimeUnit.MILLISECONDS.toNanos(ServerProperties.KEEP_ALIVE_KICK.get())) {
                 player.kick(TIMEOUT_TEXT);
             }
         }

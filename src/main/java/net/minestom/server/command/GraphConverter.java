@@ -1,12 +1,22 @@
 package net.minestom.server.command;
 
-import net.minestom.server.command.builder.arguments.*;
+import net.minestom.server.command.builder.arguments.Argument;
+import net.minestom.server.command.builder.arguments.ArgumentCommand;
+import net.minestom.server.command.builder.arguments.ArgumentEnum;
+import net.minestom.server.command.builder.arguments.ArgumentGroup;
+import net.minestom.server.command.builder.arguments.ArgumentLiteral;
+import net.minestom.server.command.builder.arguments.ArgumentLoop;
+import net.minestom.server.command.builder.arguments.ArgumentWord;
 import net.minestom.server.entity.Player;
 import net.minestom.server.network.packet.server.play.DeclareCommandsPacket;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.BiConsumer;
 
@@ -66,7 +76,7 @@ final class GraphConverter {
                 node.name = argument.getId();
                 if (redirect != null) {
                     node.flags |= 0x8;
-                    redirects.add((graph, root) -> node.redirectedNode = redirect.get());
+                    redirects.add((_, _) -> node.redirectedNode = redirect.get());
                 }
             }
             to.add(node);
@@ -77,9 +87,9 @@ final class GraphConverter {
                 node.name = argument.getId();
                 final String shortcut = argCmd.getShortcut();
                 if (shortcut.isEmpty()) {
-                    redirects.add((graph, root) -> node.redirectedNode = root);
+                    redirects.add((_, root) -> node.redirectedNode = root);
                 } else {
-                    redirects.add((graph, root) -> {
+                    redirects.add((graph, _) -> {
                         var sender = player == null ? manager.getConsoleSender() : player;
                         final List<Argument<?>> args = CommandParser.parser().parse(sender, graph, shortcut).args();
                         final Argument<?> last = args.getLast();
@@ -106,7 +116,7 @@ final class GraphConverter {
                     subNode.name = entry;
                     if (redirect != null) {
                         subNode.flags |= 0x8;
-                        redirects.add((graph, root) -> subNode.redirectedNode = redirect.get());
+                        redirects.add((_, _) -> subNode.redirectedNode = redirect.get());
                     }
                     to.add(subNode);
                     res[i] = id.getAndIncrement();
@@ -144,7 +154,7 @@ final class GraphConverter {
                     }
                 }
                 throw new RuntimeException("Arg group must have child args.");
-            } else if (argument instanceof ArgumentLoop special) {
+            } else if (argument instanceof ArgumentLoop<?> special) {
                 AtomicInteger r = new AtomicInteger();
                 int[] res = new int[special.arguments().size()];
                 List<?> arguments = special.arguments();
@@ -170,7 +180,7 @@ final class GraphConverter {
                 node.properties = argument.nodeProperties();
                 if (redirect != null) {
                     node.flags |= 0x8;
-                    redirects.add((graph, root) -> node.redirectedNode = redirect.get());
+                    redirects.add((_, _) -> node.redirectedNode = redirect.get());
                 }
                 if (hasSuggestion) {
                     node.suggestionsType = argument.suggestionType().getIdentifier();

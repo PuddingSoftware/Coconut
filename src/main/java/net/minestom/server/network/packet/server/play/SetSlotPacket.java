@@ -6,7 +6,7 @@ import net.minestom.server.network.NetworkBuffer;
 import net.minestom.server.network.NetworkBufferTemplate;
 import net.minestom.server.network.packet.server.ServerPacket;
 
-import java.util.Collection;
+import java.util.List;
 import java.util.function.UnaryOperator;
 
 import static net.minestom.server.network.NetworkBuffer.SHORT;
@@ -22,7 +22,7 @@ public record SetSlotPacket(int windowId, int stateId, short slot,
             SetSlotPacket::new);
 
     @Override
-    public Collection<Component> components() {
+    public List<Component> components() {
         return ItemStack.textComponents(itemStack);
     }
 

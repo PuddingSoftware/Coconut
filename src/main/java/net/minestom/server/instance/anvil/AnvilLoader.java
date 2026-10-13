@@ -6,7 +6,13 @@ import it.unimi.dsi.fastutil.longs.Long2ObjectOpenHashMap;
 import it.unimi.dsi.fastutil.longs.LongOpenHashSet;
 import it.unimi.dsi.fastutil.longs.LongSet;
 import net.kyori.adventure.key.Key;
-import net.kyori.adventure.nbt.*;
+import net.kyori.adventure.nbt.BinaryTag;
+import net.kyori.adventure.nbt.BinaryTagIO;
+import net.kyori.adventure.nbt.BinaryTagTypes;
+import net.kyori.adventure.nbt.ByteArrayBinaryTag;
+import net.kyori.adventure.nbt.CompoundBinaryTag;
+import net.kyori.adventure.nbt.ListBinaryTag;
+import net.kyori.adventure.nbt.StringBinaryTag;
 import net.minestom.server.MinecraftServer;
 import net.minestom.server.adventure.MinestomAdventure;
 import net.minestom.server.instance.Chunk;
@@ -33,11 +39,19 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
 import java.nio.file.StandardOpenOption;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.locks.ReentrantLock;
 
-import static net.minestom.server.coordinate.CoordConversion.*;
+import static net.minestom.server.coordinate.CoordConversion.SECTION_BLOCK_COUNT;
+import static net.minestom.server.coordinate.CoordConversion.chunkIndex;
+import static net.minestom.server.coordinate.CoordConversion.chunkToRegion;
+import static net.minestom.server.coordinate.CoordConversion.globalToSectionRelative;
+import static net.minestom.server.coordinate.CoordConversion.regionIndex;
 import static net.minestom.server.instance.Chunk.CHUNK_SIZE_X;
 import static net.minestom.server.instance.Chunk.CHUNK_SIZE_Z;
 
@@ -156,7 +170,7 @@ public class AnvilLoader implements ChunkLoader {
         try {
             final int regionX = chunkToRegion(chunkX), regionZ = chunkToRegion(chunkZ);
             final long regionIndex = regionIndex(regionX, regionZ);
-            var chunks = perRegionLoadedChunks.computeIfAbsent(regionIndex, r -> new LongOpenHashSet()); // region cache may have been removed on another thread due to unloadChunk
+            var chunks = perRegionLoadedChunks.computeIfAbsent(regionIndex, _ -> new LongOpenHashSet()); // region cache may have been removed on another thread due to unloadChunk
             final long chunkIndex = chunkIndex(chunkX, chunkZ);
             chunks.add(chunkIndex);
         } finally {
@@ -195,7 +209,7 @@ public class AnvilLoader implements ChunkLoader {
         }
     }
 
-    private void loadSections(Chunk chunk, CompoundBinaryTag chunkData) {
+    private static void loadSections(Chunk chunk, CompoundBinaryTag chunkData) {
         for (BinaryTag sectionTag : chunkData.getList("sections", BinaryTagTypes.COMPOUND)) {
             if (!(sectionTag instanceof CompoundBinaryTag sectionData)) {
                 LOGGER.warn("Invalid section tag in chunk data: {}", sectionTag);
@@ -249,7 +263,7 @@ public class AnvilLoader implements ChunkLoader {
         }
     }
 
-    private int[] loadBlockPalette(ListBinaryTag paletteTag) {
+    private static int[] loadBlockPalette(ListBinaryTag paletteTag) {
         final int length = paletteTag.size();
         int[] convertedPalette = new int[length];
         for (int i = 0; i < length; i++) {
@@ -270,7 +284,7 @@ public class AnvilLoader implements ChunkLoader {
                             try {
                                 LOGGER.warn("Fail to parse block state properties {}, expected a string tag for {}, but contents were {}",
                                         propertiesNBT, property.getKey(), MinestomAdventure.tagStringIO().asString(property.getValue()));
-                            } catch (IOException e) {
+                            } catch (IOException _) {
                                 LOGGER.warn("Fail to parse block state properties {}, expected a string tag for {}, but contents were a {} tag", propertiesNBT, property.getKey(), property.getValue());
                             }
                         }
@@ -284,19 +298,19 @@ public class AnvilLoader implements ChunkLoader {
         return convertedPalette;
     }
 
-    private int[] loadBiomePalette(DynamicRegistry<Biome> biomeRegistry, ListBinaryTag paletteTag) {
+    private static int[] loadBiomePalette(DynamicRegistry<Biome> biomeRegistry, ListBinaryTag paletteTag) {
         final int length = paletteTag.size();
         int[] convertedPalette = new int[length];
         for (int i = 0; i < length; i++) {
             final String name = paletteTag.getString(i);
-            int biomeId = biomeRegistry.getId(RegistryKey.unsafeOf(name));
+            int biomeId = biomeRegistry.getId(RegistryKey.of(name));
             if (biomeId == -1) biomeId = biomeRegistry.getId(Biome.PLAINS);
             convertedPalette[i] = biomeId;
         }
         return convertedPalette;
     }
 
-    private void loadBlockEntities(Chunk loadedChunk, CompoundBinaryTag chunkData) {
+    private static void loadBlockEntities(Chunk loadedChunk, CompoundBinaryTag chunkData) {
         for (BinaryTag blockEntityTag : chunkData.getList("block_entities", BinaryTagTypes.COMPOUND)) {
             if (!(blockEntityTag instanceof CompoundBinaryTag blockEntity)) {
                 LOGGER.warn("Invalid block entity tag in chunk data: {}", blockEntityTag);
@@ -375,7 +389,7 @@ public class AnvilLoader implements ChunkLoader {
 
             this.perRegionLoadedChunksLock.lock();
             try {
-                this.perRegionLoadedChunks.computeIfAbsent(regionIndex, k -> new LongOpenHashSet())
+                this.perRegionLoadedChunks.computeIfAbsent(regionIndex, _ -> new LongOpenHashSet())
                         .add(chunkIndex);
             } finally {
                 this.perRegionLoadedChunksLock.unlock();
@@ -403,7 +417,7 @@ public class AnvilLoader implements ChunkLoader {
         }
     }
 
-    private void saveSectionData(Chunk chunk, CompoundBinaryTag.Builder chunkData) {
+    private static void saveSectionData(Chunk chunk, CompoundBinaryTag.Builder chunkData) {
         final DynamicRegistry<Biome> biomeRegistry = chunk.getInstance().registries().biome();
         final ListBinaryTag.Builder<CompoundBinaryTag> sections = ListBinaryTag.builder(BinaryTagTypes.COMPOUND);
         final ListBinaryTag.Builder<CompoundBinaryTag> blockEntities = ListBinaryTag.builder(BinaryTagTypes.COMPOUND);

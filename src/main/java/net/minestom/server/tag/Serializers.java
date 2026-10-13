@@ -1,12 +1,23 @@
 package net.minestom.server.tag;
 
-import net.kyori.adventure.nbt.*;
+import net.kyori.adventure.nbt.BinaryTag;
+import net.kyori.adventure.nbt.BinaryTagType;
+import net.kyori.adventure.nbt.BinaryTagTypes;
+import net.kyori.adventure.nbt.ByteBinaryTag;
+import net.kyori.adventure.nbt.CompoundBinaryTag;
+import net.kyori.adventure.nbt.DoubleBinaryTag;
+import net.kyori.adventure.nbt.FloatBinaryTag;
+import net.kyori.adventure.nbt.IntArrayBinaryTag;
+import net.kyori.adventure.nbt.IntBinaryTag;
+import net.kyori.adventure.nbt.LongBinaryTag;
+import net.kyori.adventure.nbt.ShortBinaryTag;
+import net.kyori.adventure.nbt.StringBinaryTag;
 import net.kyori.adventure.text.Component;
 import net.minestom.server.MinecraftServer;
-import net.minestom.server.ServerFlag;
 import net.minestom.server.codec.Codec;
 import net.minestom.server.codec.Transcoder;
 import net.minestom.server.item.ItemStack;
+import net.minestom.server.property.ServerProperties;
 import net.minestom.server.registry.RegistryTranscoder;
 import net.minestom.server.utils.UUIDUtils;
 import org.jetbrains.annotations.Nullable;
@@ -29,11 +40,13 @@ final class Serializers {
 
     static final Entry<java.util.UUID, IntArrayBinaryTag> UUID = new Entry<>(BinaryTagTypes.INT_ARRAY, UUIDUtils::fromNbt, UUIDUtils::toNbt);
     static final Entry<ItemStack, CompoundBinaryTag> ITEM = new Entry<>(BinaryTagTypes.COMPOUND,
-            input -> ItemStack.fromItemNBT(input, MinecraftServer.process()),
-            itemStack -> itemStack.toItemNBT(MinecraftServer.process()));
+            input -> ItemStack.fromItemNBT(input, MinecraftServer.getRegistries()),
+            itemStack -> itemStack.toItemNBT(MinecraftServer.getRegistries()));
     static final Entry<Component, BinaryTag> COMPONENT = new Entry<>(null,
-            input -> Codec.COMPONENT.decode(new RegistryTranscoder<>(Transcoder.NBT, MinecraftServer.process()), input).orElse(null),
-            component -> Codec.COMPONENT.encode(new RegistryTranscoder<>(Transcoder.NBT, MinecraftServer.process()), component).orElse(null)
+            input -> Codec.COMPONENT.decode(
+                    new RegistryTranscoder<>(Transcoder.NBT, MinecraftServer.getRegistries()), input).orElse(null),
+            component -> Codec.COMPONENT.encode(
+                    new RegistryTranscoder<>(Transcoder.NBT, MinecraftServer.getRegistries()), component).orElse(null)
     );
 
     static final Entry<Object, ByteBinaryTag> EMPTY = new Entry<>(BinaryTagTypes.BYTE, _ -> null, _ -> null);
@@ -41,7 +54,7 @@ final class Serializers {
     static <T> Entry<T, CompoundBinaryTag> fromTagSerializer(TagSerializer<T> serializer) {
         return new Serializers.Entry<>(BinaryTagTypes.COMPOUND,
                 (CompoundBinaryTag compound) -> {
-                    if ((!ServerFlag.SERIALIZE_EMPTY_COMPOUND) && compound.isEmpty()) return null;
+                    if (!ServerProperties.SERIALIZE_EMPTY_COMPOUND.get() && compound.isEmpty()) return null;
                     return serializer.read(TagHandler.fromCompound(compound));
                 },
                 (value) -> {

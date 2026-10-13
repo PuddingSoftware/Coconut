@@ -48,7 +48,7 @@ public record BoundingBox(Vec relativeStart, Vec relativeEnd) implements Shape {
                                      Point shapePos,
                                      BoundingBox moving,
                                      SweepResult finalResult) {
-        if (RayUtils.BoundingBoxIntersectionCheck(moving, rayStart, rayDirection, this, shapePos, finalResult)) {
+        if (RayUtils.boundingBoxIntersectionCheck(moving, rayStart, rayDirection, this, shapePos, finalResult)) {
             finalResult.collidedPositionX = rayStart.x() + rayDirection.x() * finalResult.res;
             finalResult.collidedPositionY = rayStart.y() + rayDirection.y() * finalResult.res;
             finalResult.collidedPositionZ = rayStart.z() + rayDirection.z() * finalResult.res;
@@ -63,7 +63,7 @@ public record BoundingBox(Vec relativeStart, Vec relativeEnd) implements Shape {
     }
 
     public boolean boundingBoxRayIntersectionCheck(Vec start, Vec direction, Pos position) {
-        return RayUtils.BoundingBoxRayIntersectionCheck(start, direction, this, position);
+        return RayUtils.boundingBoxRayIntersectionCheck(start, direction, this, position);
     }
 
     /**
@@ -197,6 +197,7 @@ public record BoundingBox(Vec relativeStart, Vec relativeEnd) implements Shape {
         public PointIterator() {
         }
 
+        @SuppressWarnings("this-escape") // reset is effectively final, subclassing this iterator is unsupported
         public PointIterator(BoundingBox boundingBox, Point p, AxisMask axisMask, double axis) {
             reset(boundingBox, p, axisMask, axis);
         }

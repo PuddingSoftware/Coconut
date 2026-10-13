@@ -1,13 +1,14 @@
 package net.minestom.server.item.component;
 
-import net.minestom.server.adventure.MinestomAdventure;
 import net.kyori.adventure.nbt.CompoundBinaryTag;
 import net.kyori.adventure.nbt.IntBinaryTag;
+import net.minestom.server.adventure.MinestomAdventure;
 import net.minestom.server.codec.Transcoder;
 import net.minestom.server.component.DataComponent;
 import net.minestom.server.component.DataComponentMap;
 import net.minestom.server.component.DataComponents;
 import net.minestom.server.instance.block.Block;
+import net.minestom.server.instance.block.BlockKeys;
 import net.minestom.server.instance.block.predicate.BlockPredicate;
 import net.minestom.server.instance.block.predicate.ComponentPredicateSet;
 import net.minestom.server.instance.block.predicate.DataComponentPredicate;
@@ -25,7 +26,7 @@ import static net.minestom.server.codec.CodecAssertions.assertOk;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-public class BlockPredicatesTest extends AbstractItemComponentTest<BlockPredicates> {
+public class BlockPredicatesTest extends AbstractItemComponentRegistriesTest<BlockPredicates> {
 
     @Override
     protected DataComponent<@NotNull BlockPredicates> component() {
@@ -50,10 +51,10 @@ public class BlockPredicatesTest extends AbstractItemComponentTest<BlockPredicat
     public void testSingleBlockNbtInput() throws IOException {
         var tag = MinestomAdventure.tagStringIO().asTag("{blocks:'minecraft:stone'}");
         var component = assertOk(DataComponents.CAN_PLACE_ON.decode(Transcoder.NBT, tag));
-        var expected = new BlockPredicates(new BlockPredicate(RegistryTag.direct(RegistryKey.unsafeOf("minecraft:stone"))));
+        var expected = new BlockPredicates(new BlockPredicate(RegistryTag.direct(RegistryKey.of("minecraft:stone"))));
         assertEquals(expected, component);
         assertEquals(1, component.predicates().getFirst().blocks().size());
-        assertTrue(component.predicates().getFirst().blocks().contains(Block.STONE));
+        assertTrue(component.predicates().getFirst().blocks().contains(BlockKeys.STONE));
     }
 
     @Test
