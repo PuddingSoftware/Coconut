@@ -30,7 +30,7 @@ public class CommandContext {
 
     public CommandContext(String input) {
         this.input = input;
-        this.commandName = input.split(StringUtils.SPACE)[0];
+        this.commandName = input.split(StringUtils.SPACE, 0)[0];
     }
 
     public String getInput() {
@@ -45,6 +45,7 @@ public class CommandContext {
         return get(argument.getId());
     }
 
+    @SuppressWarnings({"unchecked", "TypeParameterUnusedInFormals"})
     public <T> T get(String identifier) {
         return (T) args.get(identifier);
     }

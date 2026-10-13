@@ -11,7 +11,11 @@ import net.minestom.server.utils.validate.Check;
 import net.minestom.server.world.DimensionType;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.Collections;
+import java.util.Objects;
+import java.util.Optional;
+import java.util.Set;
+import java.util.UUID;
 import java.util.concurrent.CopyOnWriteArraySet;
 
 /**
@@ -48,9 +52,34 @@ public final class InstanceManager {
      * @return the created {@link InstanceContainer}
      */
     public InstanceContainer createInstanceContainer(RegistryKey<DimensionType> dimensionType, @Nullable ChunkLoader loader) {
+        return createInstanceContainer(registries, dimensionType, loader);
+    }
+
+    /**
+     * Creates and registers an instance container with the given registry context.
+     *
+     * @param registries the registry context used by the instance
+     * @param dimensionType the dimension type
+     * @param loader the chunk loader, or {@code null} to use the default loader
+     * @return the created instance container
+     * @throws IllegalArgumentException if {@code dimensionType} is not registered in {@code registries}
+     */
+    public InstanceContainer createInstanceContainer(Registries registries, RegistryKey<DimensionType> dimensionType, @Nullable ChunkLoader loader) {
         final InstanceContainer instanceContainer = new InstanceContainer(registries, UUID.randomUUID(), dimensionType, loader, dimensionType.key());
         registerInstance(instanceContainer);
         return instanceContainer;
+    }
+
+    /**
+     * Creates and registers an instance container with the given registry context.
+     *
+     * @param registries the registry context used by the instance
+     * @param dimensionType the dimension type
+     * @return the created instance container
+     * @throws IllegalArgumentException if {@code dimensionType} is not registered in {@code registries}
+     */
+    public InstanceContainer createInstanceContainer(Registries registries, RegistryKey<DimensionType> dimensionType) {
+        return createInstanceContainer(registries, dimensionType, null);
     }
 
     public InstanceContainer createInstanceContainer(RegistryKey<DimensionType> dimensionType) {
@@ -122,6 +151,9 @@ public final class InstanceManager {
                 instance.getChunks().forEach(instance::unloadChunk);
                 var dispatcher = MinecraftServer.process().dispatcher();
                 instance.getChunks().forEach(dispatcher::deletePartition);
+            }
+            if (instance instanceof SharedInstance sharedInstance) {
+                sharedInstance.getInstanceContainer().removeSharedInstance(sharedInstance);
             }
             // Unregister
             instance.setRegistered(false);

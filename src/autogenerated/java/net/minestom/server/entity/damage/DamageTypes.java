@@ -9,105 +9,105 @@ import net.minestom.server.registry.RegistryKey;
  */
 @SuppressWarnings("unused")
 sealed interface DamageTypes permits DamageType {
-    RegistryKey<DamageType> WITHER = RegistryKey.unsafeOf("wither");
+    RegistryKey<DamageType> ARROW = RegistryKey.of("arrow");
 
-    RegistryKey<DamageType> WITHER_SKULL = RegistryKey.unsafeOf("wither_skull");
+    RegistryKey<DamageType> BAD_RESPAWN_POINT = RegistryKey.of("bad_respawn_point");
 
-    RegistryKey<DamageType> MACE_SMASH = RegistryKey.unsafeOf("mace_smash");
+    RegistryKey<DamageType> CACTUS = RegistryKey.of("cactus");
 
-    RegistryKey<DamageType> TRIDENT = RegistryKey.unsafeOf("trident");
+    RegistryKey<DamageType> CAMPFIRE = RegistryKey.of("campfire");
 
-    RegistryKey<DamageType> ON_FIRE = RegistryKey.unsafeOf("on_fire");
+    RegistryKey<DamageType> CRAMMING = RegistryKey.of("cramming");
 
-    RegistryKey<DamageType> CAMPFIRE = RegistryKey.unsafeOf("campfire");
+    RegistryKey<DamageType> DRAGON_BREATH = RegistryKey.of("dragon_breath");
 
-    RegistryKey<DamageType> FALLING_STALACTITE = RegistryKey.unsafeOf("falling_stalactite");
+    RegistryKey<DamageType> DROWN = RegistryKey.of("drown");
 
-    RegistryKey<DamageType> FIREBALL = RegistryKey.unsafeOf("fireball");
+    RegistryKey<DamageType> DRY_OUT = RegistryKey.of("dry_out");
 
-    RegistryKey<DamageType> SPIT = RegistryKey.unsafeOf("spit");
+    RegistryKey<DamageType> ENDER_PEARL = RegistryKey.of("ender_pearl");
 
-    RegistryKey<DamageType> STING = RegistryKey.unsafeOf("sting");
+    RegistryKey<DamageType> EXPLOSION = RegistryKey.of("explosion");
 
-    RegistryKey<DamageType> SPEAR = RegistryKey.unsafeOf("spear");
+    RegistryKey<DamageType> FALL = RegistryKey.of("fall");
 
-    RegistryKey<DamageType> IN_FIRE = RegistryKey.unsafeOf("in_fire");
+    RegistryKey<DamageType> FALLING_ANVIL = RegistryKey.of("falling_anvil");
 
-    RegistryKey<DamageType> ARROW = RegistryKey.unsafeOf("arrow");
+    RegistryKey<DamageType> FALLING_BLOCK = RegistryKey.of("falling_block");
 
-    RegistryKey<DamageType> HOT_FLOOR = RegistryKey.unsafeOf("hot_floor");
+    RegistryKey<DamageType> FALLING_STALACTITE = RegistryKey.of("falling_stalactite");
 
-    RegistryKey<DamageType> DROWN = RegistryKey.unsafeOf("drown");
+    RegistryKey<DamageType> FIREBALL = RegistryKey.of("fireball");
 
-    RegistryKey<DamageType> GENERIC_KILL = RegistryKey.unsafeOf("generic_kill");
+    RegistryKey<DamageType> FIREWORKS = RegistryKey.of("fireworks");
 
-    RegistryKey<DamageType> DRAGON_BREATH = RegistryKey.unsafeOf("dragon_breath");
+    RegistryKey<DamageType> FLY_INTO_WALL = RegistryKey.of("fly_into_wall");
 
-    RegistryKey<DamageType> LAVA = RegistryKey.unsafeOf("lava");
+    RegistryKey<DamageType> FREEZE = RegistryKey.of("freeze");
 
-    RegistryKey<DamageType> FLY_INTO_WALL = RegistryKey.unsafeOf("fly_into_wall");
+    RegistryKey<DamageType> GENERIC = RegistryKey.of("generic");
 
-    RegistryKey<DamageType> PLAYER_ATTACK = RegistryKey.unsafeOf("player_attack");
+    RegistryKey<DamageType> GENERIC_KILL = RegistryKey.of("generic_kill");
 
-    RegistryKey<DamageType> FREEZE = RegistryKey.unsafeOf("freeze");
+    RegistryKey<DamageType> HOT_FLOOR = RegistryKey.of("hot_floor");
 
-    RegistryKey<DamageType> FALLING_ANVIL = RegistryKey.unsafeOf("falling_anvil");
+    RegistryKey<DamageType> IN_FIRE = RegistryKey.of("in_fire");
 
-    RegistryKey<DamageType> SWEET_BERRY_BUSH = RegistryKey.unsafeOf("sweet_berry_bush");
+    RegistryKey<DamageType> IN_WALL = RegistryKey.of("in_wall");
 
-    RegistryKey<DamageType> FIREWORKS = RegistryKey.unsafeOf("fireworks");
+    RegistryKey<DamageType> INDIRECT_MAGIC = RegistryKey.of("indirect_magic");
 
-    RegistryKey<DamageType> STALAGMITE = RegistryKey.unsafeOf("stalagmite");
+    RegistryKey<DamageType> LAVA = RegistryKey.of("lava");
 
-    RegistryKey<DamageType> GENERIC = RegistryKey.unsafeOf("generic");
+    RegistryKey<DamageType> LIGHTNING_BOLT = RegistryKey.of("lightning_bolt");
 
-    RegistryKey<DamageType> SONIC_BOOM = RegistryKey.unsafeOf("sonic_boom");
+    RegistryKey<DamageType> MACE_SMASH = RegistryKey.of("mace_smash");
 
-    RegistryKey<DamageType> DRY_OUT = RegistryKey.unsafeOf("dry_out");
+    RegistryKey<DamageType> MAGIC = RegistryKey.of("magic");
 
-    RegistryKey<DamageType> ENDER_PEARL = RegistryKey.unsafeOf("ender_pearl");
+    RegistryKey<DamageType> MOB_ATTACK = RegistryKey.of("mob_attack");
 
-    RegistryKey<DamageType> FALL = RegistryKey.unsafeOf("fall");
+    RegistryKey<DamageType> MOB_ATTACK_NO_AGGRO = RegistryKey.of("mob_attack_no_aggro");
 
-    RegistryKey<DamageType> MOB_PROJECTILE = RegistryKey.unsafeOf("mob_projectile");
+    RegistryKey<DamageType> MOB_PROJECTILE = RegistryKey.of("mob_projectile");
 
-    RegistryKey<DamageType> MOB_ATTACK = RegistryKey.unsafeOf("mob_attack");
+    RegistryKey<DamageType> ON_FIRE = RegistryKey.of("on_fire");
 
-    RegistryKey<DamageType> THROWN = RegistryKey.unsafeOf("thrown");
+    RegistryKey<DamageType> OUT_OF_WORLD = RegistryKey.of("out_of_world");
 
-    RegistryKey<DamageType> FALLING_BLOCK = RegistryKey.unsafeOf("falling_block");
+    RegistryKey<DamageType> OUTSIDE_BORDER = RegistryKey.of("outside_border");
 
-    RegistryKey<DamageType> WIND_CHARGE = RegistryKey.unsafeOf("wind_charge");
+    RegistryKey<DamageType> PLAYER_ATTACK = RegistryKey.of("player_attack");
 
-    RegistryKey<DamageType> PLAYER_EXPLOSION = RegistryKey.unsafeOf("player_explosion");
+    RegistryKey<DamageType> PLAYER_EXPLOSION = RegistryKey.of("player_explosion");
 
-    RegistryKey<DamageType> UNATTRIBUTED_FIREBALL = RegistryKey.unsafeOf("unattributed_fireball");
+    RegistryKey<DamageType> SONIC_BOOM = RegistryKey.of("sonic_boom");
 
-    RegistryKey<DamageType> SULFUR_CUBE_HOT = RegistryKey.unsafeOf("sulfur_cube_hot");
+    RegistryKey<DamageType> SPEAR = RegistryKey.of("spear");
 
-    RegistryKey<DamageType> IN_WALL = RegistryKey.unsafeOf("in_wall");
+    RegistryKey<DamageType> SPIT = RegistryKey.of("spit");
 
-    RegistryKey<DamageType> STARVE = RegistryKey.unsafeOf("starve");
+    RegistryKey<DamageType> STALAGMITE = RegistryKey.of("stalagmite");
 
-    RegistryKey<DamageType> MOB_ATTACK_NO_AGGRO = RegistryKey.unsafeOf("mob_attack_no_aggro");
+    RegistryKey<DamageType> STARVE = RegistryKey.of("starve");
 
-    RegistryKey<DamageType> OUTSIDE_BORDER = RegistryKey.unsafeOf("outside_border");
+    RegistryKey<DamageType> STING = RegistryKey.of("sting");
 
-    RegistryKey<DamageType> LIGHTNING_BOLT = RegistryKey.unsafeOf("lightning_bolt");
+    RegistryKey<DamageType> SULFUR_CUBE_HOT = RegistryKey.of("sulfur_cube_hot");
 
-    RegistryKey<DamageType> OUT_OF_WORLD = RegistryKey.unsafeOf("out_of_world");
+    RegistryKey<DamageType> SWEET_BERRY_BUSH = RegistryKey.of("sweet_berry_bush");
 
-    RegistryKey<DamageType> MAGIC = RegistryKey.unsafeOf("magic");
+    RegistryKey<DamageType> THORNS = RegistryKey.of("thorns");
 
-    RegistryKey<DamageType> EXPLOSION = RegistryKey.unsafeOf("explosion");
+    RegistryKey<DamageType> THROWN = RegistryKey.of("thrown");
 
-    RegistryKey<DamageType> BAD_RESPAWN_POINT = RegistryKey.unsafeOf("bad_respawn_point");
+    RegistryKey<DamageType> TRIDENT = RegistryKey.of("trident");
 
-    RegistryKey<DamageType> THORNS = RegistryKey.unsafeOf("thorns");
+    RegistryKey<DamageType> UNATTRIBUTED_FIREBALL = RegistryKey.of("unattributed_fireball");
 
-    RegistryKey<DamageType> INDIRECT_MAGIC = RegistryKey.unsafeOf("indirect_magic");
+    RegistryKey<DamageType> WIND_CHARGE = RegistryKey.of("wind_charge");
 
-    RegistryKey<DamageType> CRAMMING = RegistryKey.unsafeOf("cramming");
+    RegistryKey<DamageType> WITHER = RegistryKey.of("wither");
 
-    RegistryKey<DamageType> CACTUS = RegistryKey.unsafeOf("cactus");
+    RegistryKey<DamageType> WITHER_SKULL = RegistryKey.of("wither_skull");
 }

@@ -13,7 +13,11 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.IntUnaryOperator;
 
 import static net.minestom.server.coordinate.CoordConversion.SECTION_BLOCK_COUNT;
-import static net.minestom.server.instance.palette.Palettes.*;
+import static net.minestom.server.instance.palette.Palettes.arrayLength;
+import static net.minestom.server.instance.palette.Palettes.maxPaletteSize;
+import static net.minestom.server.instance.palette.Palettes.read;
+import static net.minestom.server.instance.palette.Palettes.sectionIndex;
+import static net.minestom.server.instance.palette.Palettes.write;
 
 final class PaletteImpl implements Palette {
     private static final ThreadLocal<int[]> WRITE_CACHE = ThreadLocal.withInitial(() -> new int[SECTION_BLOCK_COUNT]);
@@ -22,13 +26,13 @@ final class PaletteImpl implements Palette {
     byte bitsPerEntry = 0;
     int count = 0; // Serve as the single value if bitsPerEntry == 0
 
-    long @UnknownNullability [] values; // null when bitsPerEntry == 0
+    long @Nullable [] values; // null when bitsPerEntry == 0
     // palette index = value
     @UnknownNullability
-    IntArrayList paletteToValueList; // null when using direct mode (bitsPerEntry > maxBitsPerEntry)
+    @Nullable IntArrayList paletteToValueList; // null when using direct mode (bitsPerEntry > maxBitsPerEntry)
     // value = palette index
     @UnknownNullability
-    Int2IntOpenHashMap valueToPaletteMap; // null when using direct mode (bitsPerEntry > maxBitsPerEntry)
+    @Nullable Int2IntOpenHashMap valueToPaletteMap; // null when using direct mode (bitsPerEntry > maxBitsPerEntry)
 
     PaletteImpl(byte dimension, byte minBitsPerEntry, byte maxBitsPerEntry, byte directBits) {
         validateDimension(dimension);
@@ -183,7 +187,7 @@ final class PaletteImpl implements Palette {
         if (bitsPerEntry == 0) {
             this.count += offset;
         } else {
-            replaceAll((x, y, z, value) -> value + offset);
+            replaceAll((_, _, _, value) -> value + offset);
         }
     }
 
@@ -217,7 +221,7 @@ final class PaletteImpl implements Palette {
                     this.count += count; // Replacing air with a block
                 }
             } else {
-                replaceAll((x, y, z, value) -> value == oldValue ? newValue : value);
+                replaceAll((_, _, _, value) -> value == oldValue ? newValue : value);
             }
         }
     }
@@ -505,7 +509,7 @@ final class PaletteImpl implements Palette {
 
         // Count unique values
         IntSet uniqueValues = new IntOpenHashSet();
-        getAll((x, y, z, value) -> uniqueValues.add(value));
+        getAll((_, _, _, value) -> uniqueValues.add(value));
         final int uniqueCount = uniqueValues.size();
 
         // If only one unique value, use fill for maximum optimization
@@ -529,9 +533,10 @@ final class PaletteImpl implements Palette {
         final PaletteImpl palette = (PaletteImpl) p;
         final int dimension = this.dimension();
         if (palette.dimension() != dimension) return false;
-        if (palette.count != this.count) return false;
-        if (palette.count == 0) return true;
-        if (palette.bitsPerEntry == 0 && this.bitsPerEntry == 0) return true;
+        final int count = count();
+        if (count != palette.count()) return false;
+        if (count == 0) return true;
+        if (bitsPerEntry == 0 && palette.bitsPerEntry == 0) return this.count == palette.count;
         final long[] thisValues = this.values;
         final long[] thatValues = palette.values;
         final int thisBpe = this.bitsPerEntry;
@@ -610,13 +615,14 @@ final class PaletteImpl implements Palette {
             final int endIndex = Math.min(startIndex + valuesPerLong, size);
             for (int index = startIndex; index < endIndex; index++) {
                 final int bitIndex = (index - startIndex) * bitsPerEntry;
-                block = block & ~(clear << bitIndex) | ((long) paletteValues[index] << bitIndex);
+                block = (block & ~(clear << bitIndex)) | ((long) paletteValues[index] << bitIndex);
             }
             values[i] = block;
         }
     }
 
     /// Assumes {@link PaletteImpl#bitsPerEntry} != 0
+    @SuppressWarnings("UnnecessaryMethodReference")
     private void downsizeWithPalette(IntArrayList palette) {
         final byte bpe = this.bitsPerEntry;
         final byte newBpe = (byte) Math.max(MathUtils.bitsToRepresent(palette.size() - 1), minBitsPerEntry);

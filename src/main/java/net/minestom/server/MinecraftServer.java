@@ -9,7 +9,11 @@ import net.minestom.server.codec.StructCodec;
 import net.minestom.server.command.CommandManager;
 import net.minestom.server.dialog.Dialog;
 import net.minestom.server.entity.damage.DamageType;
-import net.minestom.server.entity.metadata.animal.*;
+import net.minestom.server.entity.metadata.animal.ChickenVariant;
+import net.minestom.server.entity.metadata.animal.CowVariant;
+import net.minestom.server.entity.metadata.animal.FrogVariant;
+import net.minestom.server.entity.metadata.animal.PigVariant;
+import net.minestom.server.entity.metadata.animal.ZombieNautilusVariant;
 import net.minestom.server.entity.metadata.animal.tameable.CatVariant;
 import net.minestom.server.entity.metadata.animal.tameable.WolfSoundVariant;
 import net.minestom.server.entity.metadata.animal.tameable.WolfVariant;
@@ -24,7 +28,11 @@ import net.minestom.server.instance.block.jukebox.JukeboxSong;
 import net.minestom.server.instance.block.predicate.DataComponentPredicate;
 import net.minestom.server.item.armor.TrimMaterial;
 import net.minestom.server.item.armor.TrimPattern;
-import net.minestom.server.item.enchant.*;
+import net.minestom.server.item.enchant.Enchantment;
+import net.minestom.server.item.enchant.EntityEffect;
+import net.minestom.server.item.enchant.LevelBasedValue;
+import net.minestom.server.item.enchant.LocationEffect;
+import net.minestom.server.item.enchant.ValueEffect;
 import net.minestom.server.item.instrument.Instrument;
 import net.minestom.server.listener.manager.PacketListenerManager;
 import net.minestom.server.message.ChatType;
@@ -33,8 +41,10 @@ import net.minestom.server.network.packet.PacketParser;
 import net.minestom.server.network.packet.server.common.PluginMessagePacket;
 import net.minestom.server.network.packet.server.play.ServerDifficultyPacket;
 import net.minestom.server.network.socket.Server;
+import net.minestom.server.property.ServerProperties;
 import net.minestom.server.recipe.RecipeManager;
 import net.minestom.server.registry.DynamicRegistry;
+import net.minestom.server.registry.Registries;
 import net.minestom.server.scoreboard.TeamManager;
 import net.minestom.server.thread.TickSchedulerThread;
 import net.minestom.server.timer.SchedulerManager;
@@ -50,6 +60,7 @@ import org.jetbrains.annotations.UnknownNullability;
 
 import java.net.InetSocketAddress;
 import java.net.SocketAddress;
+import java.util.Objects;
 
 /**
  * The main server class used to start the server and retrieve all the managers.
@@ -70,7 +81,7 @@ public final class MinecraftServer implements MinecraftConstants {
     // Config
     // Can be modified at performance cost when increased
     @Deprecated
-    public static final int TICK_PER_SECOND = ServerFlag.SERVER_TICKS_PER_SECOND;
+    public static final int TICK_PER_SECOND = ServerProperties.SERVER_TICKS_PER_SECOND.get();
     public static final int TICK_MS = 1000 / TICK_PER_SECOND;
 
     // In-Game Manager
@@ -144,6 +155,16 @@ public final class MinecraftServer implements MinecraftConstants {
         return serverProcess;
     }
 
+    /**
+     * Gets the registries owned by the current server process.
+     *
+     * @return the current server registries
+     * @throws NullPointerException if the server has not been initialized
+     */
+    public static Registries getRegistries() {
+        return Objects.requireNonNull(serverProcess, "serverProcess").registries();
+    }
+
     public static GlobalEventHandler getGlobalEventHandler() {
         return serverProcess.eventHandler();
     }
@@ -203,25 +224,25 @@ public final class MinecraftServer implements MinecraftConstants {
     /**
      * Gets the chunk view distance of the server.
      * <p>
-     * Deprecated in favor of {@link ServerFlag#CHUNK_VIEW_DISTANCE}
+     * Deprecated in favor of {@link ServerProperties#CHUNK_VIEW_DISTANCE}
      *
      * @return the chunk view distance
      */
     @Deprecated
     public static int getChunkViewDistance() {
-        return ServerFlag.CHUNK_VIEW_DISTANCE;
+        return ServerProperties.CHUNK_VIEW_DISTANCE.get();
     }
 
     /**
      * Gets the entity view distance of the server.
      * <p>
-     * Deprecated in favor of {@link ServerFlag#ENTITY_VIEW_DISTANCE}
+     * Deprecated in favor of {@link ServerProperties#ENTITY_VIEW_DISTANCE}
      *
      * @return the entity view distance
      */
     @Deprecated
     public static int getEntityViewDistance() {
-        return ServerFlag.ENTITY_VIEW_DISTANCE;
+        return ServerProperties.ENTITY_VIEW_DISTANCE.get();
     }
 
     /**
@@ -363,7 +384,7 @@ public final class MinecraftServer implements MinecraftConstants {
     }
 
     public static DynamicRegistry<Codec<? extends DataComponentPredicate>> componentPredicateTypes() {
-        return process().componentPredicateTypes();
+        return serverProcess.componentPredicateTypes();
     }
 
     public static Server getServer() {

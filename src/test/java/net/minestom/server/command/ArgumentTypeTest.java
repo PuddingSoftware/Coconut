@@ -34,7 +34,10 @@ import java.time.Duration;
 import java.util.List;
 import java.util.UUID;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertArrayEquals;
+import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 public class ArgumentTypeTest {
 
@@ -180,6 +183,7 @@ public class ArgumentTypeTest {
         assertArg(arg, ItemStack.of(Material.GLASS_PANE).with(DataComponents.REPAIR_COST, 5).withTag(Tag.String("tag"), "value"), "glass_pane[repair_cost=5]{tag:value}");
         assertArg(arg, ItemStack.of(Material.GLASS_PANE).with(DataComponents.REPAIR_COST, 5).with(DataComponents.CUSTOM_DATA, new CustomData(CompoundBinaryTag.builder().putInt("hi", 232).build())).withTag(Tag.String("tag"), "value"),
                 "glass_pane[repair_cost=5,minecraft:custom_data={hi:232}]{tag:value}");
+        assertInvalidArg(arg, "glass_pane[damage_type=\"minestom:missing\"]");
     }
 
     @Test
@@ -220,14 +224,14 @@ public class ArgumentTypeTest {
     }
 
     @Test
-    public void testArgumentResourceLocation() {
-        var arg = ArgumentType.ResourceLocation("resource_location");
+    public void testArgumentKey() {
+        var arg = ArgumentType.Key("key");
 
         assertArg(arg, Key.key("foo:bar"), "foo:bar");
         assertArg(arg, Key.key("minecraft:air"), "air");
         assertArg(arg, Key.key("minecraft:foo/bar"), "foo/bar");
 
-        assertInvalidArg(arg, "minecraft:invalid resource location");
+        assertInvalidArg(arg, "minecraft:invalid key");
         assertInvalidArg(arg, "!");
         assertInvalidArg(arg, "a/b:empty");
     }
@@ -430,7 +434,7 @@ public class ArgumentTypeTest {
 
     @Test
     public void testArgumentLoop() {
-        var arg = ArgumentType.Loop("loop", ArgumentType.String("string"), ArgumentType.String("string2").map(s -> {
+        var arg = ArgumentType.Loop("loop", ArgumentType.String("string"), ArgumentType.String("string2").map(_ -> {
             throw new IllegalArgumentException("This argument should never be triggered");
         }));
 

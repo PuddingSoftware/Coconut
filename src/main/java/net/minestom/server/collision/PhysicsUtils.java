@@ -21,7 +21,7 @@ public final class PhysicsUtils {
      * @param position              the current entity position
      * @param velocity              the current entity velocity in blocks/tick
      * @param boundingBox           the current entity bounding box
-     * @param worldBorder           the world border to test bounds against
+     * @param worldBorder           the world border colliding with the entity, applied only when {@code entityHasPhysics} is true
      * @param blockGetter           the block getter to test block collisions against
      * @param aerodynamics          the current entity aerodynamics
      * @param noGravity             whether the entity has gravity

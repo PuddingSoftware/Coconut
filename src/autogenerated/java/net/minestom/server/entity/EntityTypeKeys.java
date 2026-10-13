@@ -11,319 +11,319 @@ import org.jetbrains.annotations.ApiStatus;
 @SuppressWarnings("unused")
 @ApiStatus.NonExtendable
 public interface EntityTypeKeys {
-    RegistryKey<EntityType> ACACIA_BOAT = RegistryKey.unsafeOf("acacia_boat");
+    RegistryKey<EntityType> ACACIA_BOAT = RegistryKey.of("acacia_boat");
 
-    RegistryKey<EntityType> ACACIA_CHEST_BOAT = RegistryKey.unsafeOf("acacia_chest_boat");
+    RegistryKey<EntityType> ACACIA_CHEST_BOAT = RegistryKey.of("acacia_chest_boat");
 
-    RegistryKey<EntityType> ALLAY = RegistryKey.unsafeOf("allay");
+    RegistryKey<EntityType> ALLAY = RegistryKey.of("allay");
 
-    RegistryKey<EntityType> AREA_EFFECT_CLOUD = RegistryKey.unsafeOf("area_effect_cloud");
+    RegistryKey<EntityType> AREA_EFFECT_CLOUD = RegistryKey.of("area_effect_cloud");
 
-    RegistryKey<EntityType> ARMADILLO = RegistryKey.unsafeOf("armadillo");
+    RegistryKey<EntityType> ARMADILLO = RegistryKey.of("armadillo");
 
-    RegistryKey<EntityType> ARMOR_STAND = RegistryKey.unsafeOf("armor_stand");
+    RegistryKey<EntityType> ARMOR_STAND = RegistryKey.of("armor_stand");
 
-    RegistryKey<EntityType> ARROW = RegistryKey.unsafeOf("arrow");
+    RegistryKey<EntityType> ARROW = RegistryKey.of("arrow");
 
-    RegistryKey<EntityType> AXOLOTL = RegistryKey.unsafeOf("axolotl");
+    RegistryKey<EntityType> AXOLOTL = RegistryKey.of("axolotl");
 
-    RegistryKey<EntityType> BAMBOO_CHEST_RAFT = RegistryKey.unsafeOf("bamboo_chest_raft");
+    RegistryKey<EntityType> BAMBOO_CHEST_RAFT = RegistryKey.of("bamboo_chest_raft");
 
-    RegistryKey<EntityType> BAMBOO_RAFT = RegistryKey.unsafeOf("bamboo_raft");
+    RegistryKey<EntityType> BAMBOO_RAFT = RegistryKey.of("bamboo_raft");
 
-    RegistryKey<EntityType> BAT = RegistryKey.unsafeOf("bat");
+    RegistryKey<EntityType> BAT = RegistryKey.of("bat");
 
-    RegistryKey<EntityType> BEE = RegistryKey.unsafeOf("bee");
+    RegistryKey<EntityType> BEE = RegistryKey.of("bee");
 
-    RegistryKey<EntityType> BIRCH_BOAT = RegistryKey.unsafeOf("birch_boat");
+    RegistryKey<EntityType> BIRCH_BOAT = RegistryKey.of("birch_boat");
 
-    RegistryKey<EntityType> BIRCH_CHEST_BOAT = RegistryKey.unsafeOf("birch_chest_boat");
+    RegistryKey<EntityType> BIRCH_CHEST_BOAT = RegistryKey.of("birch_chest_boat");
 
-    RegistryKey<EntityType> BLAZE = RegistryKey.unsafeOf("blaze");
+    RegistryKey<EntityType> BLAZE = RegistryKey.of("blaze");
 
-    RegistryKey<EntityType> BLOCK_DISPLAY = RegistryKey.unsafeOf("block_display");
+    RegistryKey<EntityType> BLOCK_DISPLAY = RegistryKey.of("block_display");
 
-    RegistryKey<EntityType> BOGGED = RegistryKey.unsafeOf("bogged");
+    RegistryKey<EntityType> BOGGED = RegistryKey.of("bogged");
 
-    RegistryKey<EntityType> BREEZE = RegistryKey.unsafeOf("breeze");
+    RegistryKey<EntityType> BREEZE = RegistryKey.of("breeze");
 
-    RegistryKey<EntityType> BREEZE_WIND_CHARGE = RegistryKey.unsafeOf("breeze_wind_charge");
+    RegistryKey<EntityType> BREEZE_WIND_CHARGE = RegistryKey.of("breeze_wind_charge");
 
-    RegistryKey<EntityType> CAMEL = RegistryKey.unsafeOf("camel");
+    RegistryKey<EntityType> CAMEL = RegistryKey.of("camel");
 
-    RegistryKey<EntityType> CAMEL_HUSK = RegistryKey.unsafeOf("camel_husk");
+    RegistryKey<EntityType> CAMEL_HUSK = RegistryKey.of("camel_husk");
 
-    RegistryKey<EntityType> CAT = RegistryKey.unsafeOf("cat");
+    RegistryKey<EntityType> CAT = RegistryKey.of("cat");
 
-    RegistryKey<EntityType> CAVE_SPIDER = RegistryKey.unsafeOf("cave_spider");
+    RegistryKey<EntityType> CAVE_SPIDER = RegistryKey.of("cave_spider");
 
-    RegistryKey<EntityType> CHERRY_BOAT = RegistryKey.unsafeOf("cherry_boat");
+    RegistryKey<EntityType> CHERRY_BOAT = RegistryKey.of("cherry_boat");
 
-    RegistryKey<EntityType> CHERRY_CHEST_BOAT = RegistryKey.unsafeOf("cherry_chest_boat");
+    RegistryKey<EntityType> CHERRY_CHEST_BOAT = RegistryKey.of("cherry_chest_boat");
 
-    RegistryKey<EntityType> CHEST_MINECART = RegistryKey.unsafeOf("chest_minecart");
+    RegistryKey<EntityType> CHEST_MINECART = RegistryKey.of("chest_minecart");
 
-    RegistryKey<EntityType> CHICKEN = RegistryKey.unsafeOf("chicken");
+    RegistryKey<EntityType> CHICKEN = RegistryKey.of("chicken");
 
-    RegistryKey<EntityType> COD = RegistryKey.unsafeOf("cod");
+    RegistryKey<EntityType> COD = RegistryKey.of("cod");
 
-    RegistryKey<EntityType> COPPER_GOLEM = RegistryKey.unsafeOf("copper_golem");
+    RegistryKey<EntityType> COMMAND_BLOCK_MINECART = RegistryKey.of("command_block_minecart");
 
-    RegistryKey<EntityType> COMMAND_BLOCK_MINECART = RegistryKey.unsafeOf("command_block_minecart");
+    RegistryKey<EntityType> COPPER_GOLEM = RegistryKey.of("copper_golem");
 
-    RegistryKey<EntityType> COW = RegistryKey.unsafeOf("cow");
+    RegistryKey<EntityType> COW = RegistryKey.of("cow");
 
-    RegistryKey<EntityType> CREAKING = RegistryKey.unsafeOf("creaking");
+    RegistryKey<EntityType> CREAKING = RegistryKey.of("creaking");
 
-    RegistryKey<EntityType> CREEPER = RegistryKey.unsafeOf("creeper");
+    RegistryKey<EntityType> CREEPER = RegistryKey.of("creeper");
 
-    RegistryKey<EntityType> DARK_OAK_BOAT = RegistryKey.unsafeOf("dark_oak_boat");
+    RegistryKey<EntityType> DARK_OAK_BOAT = RegistryKey.of("dark_oak_boat");
 
-    RegistryKey<EntityType> DARK_OAK_CHEST_BOAT = RegistryKey.unsafeOf("dark_oak_chest_boat");
+    RegistryKey<EntityType> DARK_OAK_CHEST_BOAT = RegistryKey.of("dark_oak_chest_boat");
 
-    RegistryKey<EntityType> DOLPHIN = RegistryKey.unsafeOf("dolphin");
+    RegistryKey<EntityType> DOLPHIN = RegistryKey.of("dolphin");
 
-    RegistryKey<EntityType> DONKEY = RegistryKey.unsafeOf("donkey");
+    RegistryKey<EntityType> DONKEY = RegistryKey.of("donkey");
 
-    RegistryKey<EntityType> DRAGON_FIREBALL = RegistryKey.unsafeOf("dragon_fireball");
+    RegistryKey<EntityType> DRAGON_FIREBALL = RegistryKey.of("dragon_fireball");
 
-    RegistryKey<EntityType> DROWNED = RegistryKey.unsafeOf("drowned");
+    RegistryKey<EntityType> DROWNED = RegistryKey.of("drowned");
 
-    RegistryKey<EntityType> EGG = RegistryKey.unsafeOf("egg");
+    RegistryKey<EntityType> EGG = RegistryKey.of("egg");
 
-    RegistryKey<EntityType> ELDER_GUARDIAN = RegistryKey.unsafeOf("elder_guardian");
+    RegistryKey<EntityType> ELDER_GUARDIAN = RegistryKey.of("elder_guardian");
 
-    RegistryKey<EntityType> ENDERMAN = RegistryKey.unsafeOf("enderman");
+    RegistryKey<EntityType> END_CRYSTAL = RegistryKey.of("end_crystal");
 
-    RegistryKey<EntityType> ENDERMITE = RegistryKey.unsafeOf("endermite");
+    RegistryKey<EntityType> ENDER_DRAGON = RegistryKey.of("ender_dragon");
 
-    RegistryKey<EntityType> ENDER_DRAGON = RegistryKey.unsafeOf("ender_dragon");
+    RegistryKey<EntityType> ENDER_PEARL = RegistryKey.of("ender_pearl");
 
-    RegistryKey<EntityType> ENDER_PEARL = RegistryKey.unsafeOf("ender_pearl");
+    RegistryKey<EntityType> ENDERMAN = RegistryKey.of("enderman");
 
-    RegistryKey<EntityType> END_CRYSTAL = RegistryKey.unsafeOf("end_crystal");
+    RegistryKey<EntityType> ENDERMITE = RegistryKey.of("endermite");
 
-    RegistryKey<EntityType> EVOKER = RegistryKey.unsafeOf("evoker");
+    RegistryKey<EntityType> EVOKER = RegistryKey.of("evoker");
 
-    RegistryKey<EntityType> EVOKER_FANGS = RegistryKey.unsafeOf("evoker_fangs");
+    RegistryKey<EntityType> EVOKER_FANGS = RegistryKey.of("evoker_fangs");
 
-    RegistryKey<EntityType> EXPERIENCE_BOTTLE = RegistryKey.unsafeOf("experience_bottle");
+    RegistryKey<EntityType> EXPERIENCE_BOTTLE = RegistryKey.of("experience_bottle");
 
-    RegistryKey<EntityType> EXPERIENCE_ORB = RegistryKey.unsafeOf("experience_orb");
+    RegistryKey<EntityType> EXPERIENCE_ORB = RegistryKey.of("experience_orb");
 
-    RegistryKey<EntityType> EYE_OF_ENDER = RegistryKey.unsafeOf("eye_of_ender");
+    RegistryKey<EntityType> EYE_OF_ENDER = RegistryKey.of("eye_of_ender");
 
-    RegistryKey<EntityType> FALLING_BLOCK = RegistryKey.unsafeOf("falling_block");
+    RegistryKey<EntityType> FALLING_BLOCK = RegistryKey.of("falling_block");
 
-    RegistryKey<EntityType> FIREBALL = RegistryKey.unsafeOf("fireball");
+    RegistryKey<EntityType> FIREBALL = RegistryKey.of("fireball");
 
-    RegistryKey<EntityType> FIREWORK_ROCKET = RegistryKey.unsafeOf("firework_rocket");
+    RegistryKey<EntityType> FIREWORK_ROCKET = RegistryKey.of("firework_rocket");
 
-    RegistryKey<EntityType> FOX = RegistryKey.unsafeOf("fox");
+    RegistryKey<EntityType> FISHING_BOBBER = RegistryKey.of("fishing_bobber");
 
-    RegistryKey<EntityType> FROG = RegistryKey.unsafeOf("frog");
+    RegistryKey<EntityType> FOX = RegistryKey.of("fox");
 
-    RegistryKey<EntityType> FURNACE_MINECART = RegistryKey.unsafeOf("furnace_minecart");
+    RegistryKey<EntityType> FROG = RegistryKey.of("frog");
 
-    RegistryKey<EntityType> GHAST = RegistryKey.unsafeOf("ghast");
+    RegistryKey<EntityType> FURNACE_MINECART = RegistryKey.of("furnace_minecart");
 
-    RegistryKey<EntityType> HAPPY_GHAST = RegistryKey.unsafeOf("happy_ghast");
+    RegistryKey<EntityType> GHAST = RegistryKey.of("ghast");
 
-    RegistryKey<EntityType> GIANT = RegistryKey.unsafeOf("giant");
+    RegistryKey<EntityType> GIANT = RegistryKey.of("giant");
 
-    RegistryKey<EntityType> GLOW_ITEM_FRAME = RegistryKey.unsafeOf("glow_item_frame");
+    RegistryKey<EntityType> GLOW_ITEM_FRAME = RegistryKey.of("glow_item_frame");
 
-    RegistryKey<EntityType> GLOW_SQUID = RegistryKey.unsafeOf("glow_squid");
+    RegistryKey<EntityType> GLOW_SQUID = RegistryKey.of("glow_squid");
 
-    RegistryKey<EntityType> GOAT = RegistryKey.unsafeOf("goat");
+    RegistryKey<EntityType> GOAT = RegistryKey.of("goat");
 
-    RegistryKey<EntityType> GUARDIAN = RegistryKey.unsafeOf("guardian");
+    RegistryKey<EntityType> GUARDIAN = RegistryKey.of("guardian");
 
-    RegistryKey<EntityType> HOGLIN = RegistryKey.unsafeOf("hoglin");
+    RegistryKey<EntityType> HAPPY_GHAST = RegistryKey.of("happy_ghast");
 
-    RegistryKey<EntityType> HOPPER_MINECART = RegistryKey.unsafeOf("hopper_minecart");
+    RegistryKey<EntityType> HOGLIN = RegistryKey.of("hoglin");
 
-    RegistryKey<EntityType> HORSE = RegistryKey.unsafeOf("horse");
+    RegistryKey<EntityType> HOPPER_MINECART = RegistryKey.of("hopper_minecart");
 
-    RegistryKey<EntityType> HUSK = RegistryKey.unsafeOf("husk");
+    RegistryKey<EntityType> HORSE = RegistryKey.of("horse");
 
-    RegistryKey<EntityType> ILLUSIONER = RegistryKey.unsafeOf("illusioner");
+    RegistryKey<EntityType> HUSK = RegistryKey.of("husk");
 
-    RegistryKey<EntityType> INTERACTION = RegistryKey.unsafeOf("interaction");
+    RegistryKey<EntityType> ILLUSIONER = RegistryKey.of("illusioner");
 
-    RegistryKey<EntityType> IRON_GOLEM = RegistryKey.unsafeOf("iron_golem");
+    RegistryKey<EntityType> INTERACTION = RegistryKey.of("interaction");
 
-    RegistryKey<EntityType> ITEM = RegistryKey.unsafeOf("item");
+    RegistryKey<EntityType> IRON_GOLEM = RegistryKey.of("iron_golem");
 
-    RegistryKey<EntityType> ITEM_DISPLAY = RegistryKey.unsafeOf("item_display");
+    RegistryKey<EntityType> ITEM = RegistryKey.of("item");
 
-    RegistryKey<EntityType> ITEM_FRAME = RegistryKey.unsafeOf("item_frame");
+    RegistryKey<EntityType> ITEM_DISPLAY = RegistryKey.of("item_display");
 
-    RegistryKey<EntityType> JUNGLE_BOAT = RegistryKey.unsafeOf("jungle_boat");
+    RegistryKey<EntityType> ITEM_FRAME = RegistryKey.of("item_frame");
 
-    RegistryKey<EntityType> JUNGLE_CHEST_BOAT = RegistryKey.unsafeOf("jungle_chest_boat");
+    RegistryKey<EntityType> JUNGLE_BOAT = RegistryKey.of("jungle_boat");
 
-    RegistryKey<EntityType> LEASH_KNOT = RegistryKey.unsafeOf("leash_knot");
+    RegistryKey<EntityType> JUNGLE_CHEST_BOAT = RegistryKey.of("jungle_chest_boat");
 
-    RegistryKey<EntityType> LIGHTNING_BOLT = RegistryKey.unsafeOf("lightning_bolt");
+    RegistryKey<EntityType> LEASH_KNOT = RegistryKey.of("leash_knot");
 
-    RegistryKey<EntityType> LLAMA = RegistryKey.unsafeOf("llama");
+    RegistryKey<EntityType> LIGHTNING_BOLT = RegistryKey.of("lightning_bolt");
 
-    RegistryKey<EntityType> LLAMA_SPIT = RegistryKey.unsafeOf("llama_spit");
+    RegistryKey<EntityType> LINGERING_POTION = RegistryKey.of("lingering_potion");
 
-    RegistryKey<EntityType> MAGMA_CUBE = RegistryKey.unsafeOf("magma_cube");
+    RegistryKey<EntityType> LLAMA = RegistryKey.of("llama");
 
-    RegistryKey<EntityType> MANGROVE_BOAT = RegistryKey.unsafeOf("mangrove_boat");
+    RegistryKey<EntityType> LLAMA_SPIT = RegistryKey.of("llama_spit");
 
-    RegistryKey<EntityType> MANGROVE_CHEST_BOAT = RegistryKey.unsafeOf("mangrove_chest_boat");
+    RegistryKey<EntityType> MAGMA_CUBE = RegistryKey.of("magma_cube");
 
-    RegistryKey<EntityType> MANNEQUIN = RegistryKey.unsafeOf("mannequin");
+    RegistryKey<EntityType> MANGROVE_BOAT = RegistryKey.of("mangrove_boat");
 
-    RegistryKey<EntityType> MARKER = RegistryKey.unsafeOf("marker");
+    RegistryKey<EntityType> MANGROVE_CHEST_BOAT = RegistryKey.of("mangrove_chest_boat");
 
-    RegistryKey<EntityType> MINECART = RegistryKey.unsafeOf("minecart");
+    RegistryKey<EntityType> MANNEQUIN = RegistryKey.of("mannequin");
 
-    RegistryKey<EntityType> MOOSHROOM = RegistryKey.unsafeOf("mooshroom");
+    RegistryKey<EntityType> MARKER = RegistryKey.of("marker");
 
-    RegistryKey<EntityType> MULE = RegistryKey.unsafeOf("mule");
+    RegistryKey<EntityType> MINECART = RegistryKey.of("minecart");
 
-    RegistryKey<EntityType> NAUTILUS = RegistryKey.unsafeOf("nautilus");
+    RegistryKey<EntityType> MOOSHROOM = RegistryKey.of("mooshroom");
 
-    RegistryKey<EntityType> OAK_BOAT = RegistryKey.unsafeOf("oak_boat");
+    RegistryKey<EntityType> MULE = RegistryKey.of("mule");
 
-    RegistryKey<EntityType> OAK_CHEST_BOAT = RegistryKey.unsafeOf("oak_chest_boat");
+    RegistryKey<EntityType> NAUTILUS = RegistryKey.of("nautilus");
 
-    RegistryKey<EntityType> OCELOT = RegistryKey.unsafeOf("ocelot");
+    RegistryKey<EntityType> OAK_BOAT = RegistryKey.of("oak_boat");
 
-    RegistryKey<EntityType> OMINOUS_ITEM_SPAWNER = RegistryKey.unsafeOf("ominous_item_spawner");
+    RegistryKey<EntityType> OAK_CHEST_BOAT = RegistryKey.of("oak_chest_boat");
 
-    RegistryKey<EntityType> PAINTING = RegistryKey.unsafeOf("painting");
+    RegistryKey<EntityType> OCELOT = RegistryKey.of("ocelot");
 
-    RegistryKey<EntityType> PALE_OAK_BOAT = RegistryKey.unsafeOf("pale_oak_boat");
+    RegistryKey<EntityType> OMINOUS_ITEM_SPAWNER = RegistryKey.of("ominous_item_spawner");
 
-    RegistryKey<EntityType> PALE_OAK_CHEST_BOAT = RegistryKey.unsafeOf("pale_oak_chest_boat");
+    RegistryKey<EntityType> PAINTING = RegistryKey.of("painting");
 
-    RegistryKey<EntityType> PANDA = RegistryKey.unsafeOf("panda");
+    RegistryKey<EntityType> PALE_OAK_BOAT = RegistryKey.of("pale_oak_boat");
 
-    RegistryKey<EntityType> PARCHED = RegistryKey.unsafeOf("parched");
+    RegistryKey<EntityType> PALE_OAK_CHEST_BOAT = RegistryKey.of("pale_oak_chest_boat");
 
-    RegistryKey<EntityType> PARROT = RegistryKey.unsafeOf("parrot");
+    RegistryKey<EntityType> PANDA = RegistryKey.of("panda");
 
-    RegistryKey<EntityType> PHANTOM = RegistryKey.unsafeOf("phantom");
+    RegistryKey<EntityType> PARCHED = RegistryKey.of("parched");
 
-    RegistryKey<EntityType> PIG = RegistryKey.unsafeOf("pig");
+    RegistryKey<EntityType> PARROT = RegistryKey.of("parrot");
 
-    RegistryKey<EntityType> PIGLIN = RegistryKey.unsafeOf("piglin");
+    RegistryKey<EntityType> PHANTOM = RegistryKey.of("phantom");
 
-    RegistryKey<EntityType> PIGLIN_BRUTE = RegistryKey.unsafeOf("piglin_brute");
+    RegistryKey<EntityType> PIG = RegistryKey.of("pig");
 
-    RegistryKey<EntityType> PILLAGER = RegistryKey.unsafeOf("pillager");
+    RegistryKey<EntityType> PIGLIN = RegistryKey.of("piglin");
 
-    RegistryKey<EntityType> POLAR_BEAR = RegistryKey.unsafeOf("polar_bear");
+    RegistryKey<EntityType> PIGLIN_BRUTE = RegistryKey.of("piglin_brute");
 
-    RegistryKey<EntityType> SPLASH_POTION = RegistryKey.unsafeOf("splash_potion");
+    RegistryKey<EntityType> PILLAGER = RegistryKey.of("pillager");
 
-    RegistryKey<EntityType> LINGERING_POTION = RegistryKey.unsafeOf("lingering_potion");
+    RegistryKey<EntityType> PLAYER = RegistryKey.of("player");
 
-    RegistryKey<EntityType> PUFFERFISH = RegistryKey.unsafeOf("pufferfish");
+    RegistryKey<EntityType> POLAR_BEAR = RegistryKey.of("polar_bear");
 
-    RegistryKey<EntityType> RABBIT = RegistryKey.unsafeOf("rabbit");
+    RegistryKey<EntityType> PUFFERFISH = RegistryKey.of("pufferfish");
 
-    RegistryKey<EntityType> RAVAGER = RegistryKey.unsafeOf("ravager");
+    RegistryKey<EntityType> RABBIT = RegistryKey.of("rabbit");
 
-    RegistryKey<EntityType> SALMON = RegistryKey.unsafeOf("salmon");
+    RegistryKey<EntityType> RAVAGER = RegistryKey.of("ravager");
 
-    RegistryKey<EntityType> SHEEP = RegistryKey.unsafeOf("sheep");
+    RegistryKey<EntityType> SALMON = RegistryKey.of("salmon");
 
-    RegistryKey<EntityType> SHULKER = RegistryKey.unsafeOf("shulker");
+    RegistryKey<EntityType> SHEEP = RegistryKey.of("sheep");
 
-    RegistryKey<EntityType> SHULKER_BULLET = RegistryKey.unsafeOf("shulker_bullet");
+    RegistryKey<EntityType> SHULKER = RegistryKey.of("shulker");
 
-    RegistryKey<EntityType> SILVERFISH = RegistryKey.unsafeOf("silverfish");
+    RegistryKey<EntityType> SHULKER_BULLET = RegistryKey.of("shulker_bullet");
 
-    RegistryKey<EntityType> SKELETON = RegistryKey.unsafeOf("skeleton");
+    RegistryKey<EntityType> SILVERFISH = RegistryKey.of("silverfish");
 
-    RegistryKey<EntityType> SKELETON_HORSE = RegistryKey.unsafeOf("skeleton_horse");
+    RegistryKey<EntityType> SKELETON = RegistryKey.of("skeleton");
 
-    RegistryKey<EntityType> SLIME = RegistryKey.unsafeOf("slime");
+    RegistryKey<EntityType> SKELETON_HORSE = RegistryKey.of("skeleton_horse");
 
-    RegistryKey<EntityType> SMALL_FIREBALL = RegistryKey.unsafeOf("small_fireball");
+    RegistryKey<EntityType> SLIME = RegistryKey.of("slime");
 
-    RegistryKey<EntityType> SNIFFER = RegistryKey.unsafeOf("sniffer");
+    RegistryKey<EntityType> SMALL_FIREBALL = RegistryKey.of("small_fireball");
 
-    RegistryKey<EntityType> SNOWBALL = RegistryKey.unsafeOf("snowball");
+    RegistryKey<EntityType> SNIFFER = RegistryKey.of("sniffer");
 
-    RegistryKey<EntityType> SNOW_GOLEM = RegistryKey.unsafeOf("snow_golem");
+    RegistryKey<EntityType> SNOW_GOLEM = RegistryKey.of("snow_golem");
 
-    RegistryKey<EntityType> SPAWNER_MINECART = RegistryKey.unsafeOf("spawner_minecart");
+    RegistryKey<EntityType> SNOWBALL = RegistryKey.of("snowball");
 
-    RegistryKey<EntityType> SPECTRAL_ARROW = RegistryKey.unsafeOf("spectral_arrow");
+    RegistryKey<EntityType> SPAWNER_MINECART = RegistryKey.of("spawner_minecart");
 
-    RegistryKey<EntityType> SPIDER = RegistryKey.unsafeOf("spider");
+    RegistryKey<EntityType> SPECTRAL_ARROW = RegistryKey.of("spectral_arrow");
 
-    RegistryKey<EntityType> SPRUCE_BOAT = RegistryKey.unsafeOf("spruce_boat");
+    RegistryKey<EntityType> SPIDER = RegistryKey.of("spider");
 
-    RegistryKey<EntityType> SPRUCE_CHEST_BOAT = RegistryKey.unsafeOf("spruce_chest_boat");
+    RegistryKey<EntityType> SPLASH_POTION = RegistryKey.of("splash_potion");
 
-    RegistryKey<EntityType> SQUID = RegistryKey.unsafeOf("squid");
+    RegistryKey<EntityType> SPRUCE_BOAT = RegistryKey.of("spruce_boat");
 
-    RegistryKey<EntityType> STRAY = RegistryKey.unsafeOf("stray");
+    RegistryKey<EntityType> SPRUCE_CHEST_BOAT = RegistryKey.of("spruce_chest_boat");
 
-    RegistryKey<EntityType> STRIDER = RegistryKey.unsafeOf("strider");
+    RegistryKey<EntityType> SQUID = RegistryKey.of("squid");
 
-    RegistryKey<EntityType> SULFUR_CUBE = RegistryKey.unsafeOf("sulfur_cube");
+    RegistryKey<EntityType> STRAY = RegistryKey.of("stray");
 
-    RegistryKey<EntityType> TADPOLE = RegistryKey.unsafeOf("tadpole");
+    RegistryKey<EntityType> STRIDER = RegistryKey.of("strider");
 
-    RegistryKey<EntityType> TEXT_DISPLAY = RegistryKey.unsafeOf("text_display");
+    RegistryKey<EntityType> SULFUR_CUBE = RegistryKey.of("sulfur_cube");
 
-    RegistryKey<EntityType> TNT = RegistryKey.unsafeOf("tnt");
+    RegistryKey<EntityType> TADPOLE = RegistryKey.of("tadpole");
 
-    RegistryKey<EntityType> TNT_MINECART = RegistryKey.unsafeOf("tnt_minecart");
+    RegistryKey<EntityType> TEXT_DISPLAY = RegistryKey.of("text_display");
 
-    RegistryKey<EntityType> TRADER_LLAMA = RegistryKey.unsafeOf("trader_llama");
+    RegistryKey<EntityType> TNT = RegistryKey.of("tnt");
 
-    RegistryKey<EntityType> TRIDENT = RegistryKey.unsafeOf("trident");
+    RegistryKey<EntityType> TNT_MINECART = RegistryKey.of("tnt_minecart");
 
-    RegistryKey<EntityType> TROPICAL_FISH = RegistryKey.unsafeOf("tropical_fish");
+    RegistryKey<EntityType> TRADER_LLAMA = RegistryKey.of("trader_llama");
 
-    RegistryKey<EntityType> TURTLE = RegistryKey.unsafeOf("turtle");
+    RegistryKey<EntityType> TRIDENT = RegistryKey.of("trident");
 
-    RegistryKey<EntityType> VEX = RegistryKey.unsafeOf("vex");
+    RegistryKey<EntityType> TROPICAL_FISH = RegistryKey.of("tropical_fish");
 
-    RegistryKey<EntityType> VILLAGER = RegistryKey.unsafeOf("villager");
+    RegistryKey<EntityType> TURTLE = RegistryKey.of("turtle");
 
-    RegistryKey<EntityType> VINDICATOR = RegistryKey.unsafeOf("vindicator");
+    RegistryKey<EntityType> VEX = RegistryKey.of("vex");
 
-    RegistryKey<EntityType> WANDERING_TRADER = RegistryKey.unsafeOf("wandering_trader");
+    RegistryKey<EntityType> VILLAGER = RegistryKey.of("villager");
 
-    RegistryKey<EntityType> WARDEN = RegistryKey.unsafeOf("warden");
+    RegistryKey<EntityType> VINDICATOR = RegistryKey.of("vindicator");
 
-    RegistryKey<EntityType> WIND_CHARGE = RegistryKey.unsafeOf("wind_charge");
+    RegistryKey<EntityType> WANDERING_TRADER = RegistryKey.of("wandering_trader");
 
-    RegistryKey<EntityType> WITCH = RegistryKey.unsafeOf("witch");
+    RegistryKey<EntityType> WARDEN = RegistryKey.of("warden");
 
-    RegistryKey<EntityType> WITHER = RegistryKey.unsafeOf("wither");
+    RegistryKey<EntityType> WIND_CHARGE = RegistryKey.of("wind_charge");
 
-    RegistryKey<EntityType> WITHER_SKELETON = RegistryKey.unsafeOf("wither_skeleton");
+    RegistryKey<EntityType> WITCH = RegistryKey.of("witch");
 
-    RegistryKey<EntityType> WITHER_SKULL = RegistryKey.unsafeOf("wither_skull");
+    RegistryKey<EntityType> WITHER = RegistryKey.of("wither");
 
-    RegistryKey<EntityType> WOLF = RegistryKey.unsafeOf("wolf");
+    RegistryKey<EntityType> WITHER_SKELETON = RegistryKey.of("wither_skeleton");
 
-    RegistryKey<EntityType> ZOGLIN = RegistryKey.unsafeOf("zoglin");
+    RegistryKey<EntityType> WITHER_SKULL = RegistryKey.of("wither_skull");
 
-    RegistryKey<EntityType> ZOMBIE = RegistryKey.unsafeOf("zombie");
+    RegistryKey<EntityType> WOLF = RegistryKey.of("wolf");
 
-    RegistryKey<EntityType> ZOMBIE_HORSE = RegistryKey.unsafeOf("zombie_horse");
+    RegistryKey<EntityType> ZOGLIN = RegistryKey.of("zoglin");
 
-    RegistryKey<EntityType> ZOMBIE_NAUTILUS = RegistryKey.unsafeOf("zombie_nautilus");
+    RegistryKey<EntityType> ZOMBIE = RegistryKey.of("zombie");
 
-    RegistryKey<EntityType> ZOMBIE_VILLAGER = RegistryKey.unsafeOf("zombie_villager");
+    RegistryKey<EntityType> ZOMBIE_HORSE = RegistryKey.of("zombie_horse");
 
-    RegistryKey<EntityType> ZOMBIFIED_PIGLIN = RegistryKey.unsafeOf("zombified_piglin");
+    RegistryKey<EntityType> ZOMBIE_NAUTILUS = RegistryKey.of("zombie_nautilus");
 
-    RegistryKey<EntityType> PLAYER = RegistryKey.unsafeOf("player");
+    RegistryKey<EntityType> ZOMBIE_VILLAGER = RegistryKey.of("zombie_villager");
 
-    RegistryKey<EntityType> FISHING_BOBBER = RegistryKey.unsafeOf("fishing_bobber");
+    RegistryKey<EntityType> ZOMBIFIED_PIGLIN = RegistryKey.of("zombified_piglin");
 }

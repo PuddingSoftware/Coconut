@@ -30,7 +30,17 @@ import net.minestom.server.network.packet.server.configuration.FinishConfigurati
 import net.minestom.server.network.packet.server.configuration.SelectKnownPacksPacket;
 import net.minestom.server.network.packet.server.configuration.UpdateEnabledFeaturesPacket;
 import net.minestom.server.network.packet.server.login.LoginSuccessPacket;
-import net.minestom.server.network.packet.server.play.*;
+import net.minestom.server.network.packet.server.play.ChangeGameStatePacket;
+import net.minestom.server.network.packet.server.play.ChunkBatchFinishedPacket;
+import net.minestom.server.network.packet.server.play.ChunkBatchStartPacket;
+import net.minestom.server.network.packet.server.play.ChunkDataPacket;
+import net.minestom.server.network.packet.server.play.JoinGamePacket;
+import net.minestom.server.network.packet.server.play.PlayerAbilitiesPacket;
+import net.minestom.server.network.packet.server.play.PlayerPositionAndLookPacket;
+import net.minestom.server.network.packet.server.play.ServerDifficultyPacket;
+import net.minestom.server.network.packet.server.play.SpawnPositionPacket;
+import net.minestom.server.network.packet.server.play.UpdateViewDistancePacket;
+import net.minestom.server.network.packet.server.play.UpdateViewPositionPacket;
 import net.minestom.server.network.packet.server.play.data.ChunkData;
 import net.minestom.server.network.packet.server.play.data.LightData;
 import net.minestom.server.network.packet.server.play.data.PlayerSpawnInfo;
@@ -50,7 +60,12 @@ import java.net.InetSocketAddress;
 import java.net.SocketAddress;
 import java.nio.channels.ServerSocketChannel;
 import java.nio.channels.SocketChannel;
-import java.util.*;
+import java.util.Arrays;
+import java.util.BitSet;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
+import java.util.UUID;
 
 import static net.minestom.server.MinecraftServer.PROTOCOL_VERSION;
 
@@ -61,6 +76,8 @@ import static net.minestom.server.MinecraftServer.PROTOCOL_VERSION;
  * Everything below is plain sockets plus virtual threads, backed by a tiny Registries implementation for packet codecs.
  */
 public final class Scratch {
+    private static final System.Logger LOGGER = System.getLogger("Scratch");
+
     private static final SocketAddress ADDRESS = new InetSocketAddress("0.0.0.0", 25565);
     private static final int VIEW_DISTANCE = 3;
     private static final String WORLD = "minecraft:overworld";
@@ -115,7 +132,7 @@ public final class Scratch {
                                 connection.serverState = clientState;
                             }
                             switch (parsed.packet()) {
-                                case StatusRequestPacket ignored -> connection.send(new ResponsePacket(STATUS_JSON));
+                                case StatusRequestPacket _ -> connection.send(new ResponsePacket(STATUS_JSON));
                                 case ClientPingRequestPacket ping ->
                                         connection.send(new PingResponsePacket(ping.number()));
                                 case ClientLoginStartPacket login -> connection.send(new LoginSuccessPacket(
@@ -133,6 +150,7 @@ public final class Scratch {
                     }
                     case PacketReading.Result.Empty<ClientPacket> _ -> {
                     }
+                    case PacketReading.Result.Skipped<ClientPacket> _ -> connection.readBuffer.compact();
                     case PacketReading.Result.Failure<ClientPacket> failure ->
                             connection.readBuffer.resize(failure.requiredCapacity());
                 }
@@ -140,7 +158,7 @@ public final class Scratch {
         } catch (EOFException _) {
             // Normal client disconnect.
         } catch (Throwable throwable) {
-            throwable.printStackTrace();
+            LOGGER.log(System.Logger.Level.ERROR, "Connection failure", throwable);
         }
     }
 

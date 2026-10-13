@@ -19,7 +19,14 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
-import static net.minestom.server.utils.inventory.PlayerInventoryUtils.*;
+import static net.minestom.server.utils.inventory.PlayerInventoryUtils.BOOTS_SLOT;
+import static net.minestom.server.utils.inventory.PlayerInventoryUtils.CHESTPLATE_SLOT;
+import static net.minestom.server.utils.inventory.PlayerInventoryUtils.HELMET_SLOT;
+import static net.minestom.server.utils.inventory.PlayerInventoryUtils.LEGGINGS_SLOT;
+import static net.minestom.server.utils.inventory.PlayerInventoryUtils.OFFHAND_SLOT;
+import static net.minestom.server.utils.inventory.PlayerInventoryUtils.convertMinestomSlotToPlayerInventorySlot;
+import static net.minestom.server.utils.inventory.PlayerInventoryUtils.convertMinestomSlotToWindowSlot;
+import static net.minestom.server.utils.inventory.PlayerInventoryUtils.isPlayerInventorySlot;
 
 /**
  * Represents the inventory of a {@link Player}, retrieved with {@link Player#getInventory()}.
@@ -39,9 +46,6 @@ public non-sealed class PlayerInventory extends AbstractInventory {
     public synchronized void clear() {
         cursorItem = ItemStack.AIR;
         super.clear();
-
-        // Update equipments
-        viewers.forEach(viewer -> viewer.sendPacketToViewersAndSelf(viewer.getEquipmentsPacket()));
     }
 
     @Override
@@ -54,7 +58,7 @@ public non-sealed class PlayerInventory extends AbstractInventory {
         return 0;
     }
 
-    private int getSlotId(EquipmentSlot slot, byte heldSlot) {
+    private static int getSlotId(EquipmentSlot slot, byte heldSlot) {
         return switch (slot) {
             case MAIN_HAND -> heldSlot;
             case OFF_HAND -> OFFHAND_SLOT;
@@ -62,7 +66,7 @@ public non-sealed class PlayerInventory extends AbstractInventory {
         };
     }
 
-    private @Nullable EquipmentSlot getEquipmentSlot(int slot, byte heldSlot) {
+    private static @Nullable EquipmentSlot getEquipmentSlot(int slot, byte heldSlot) {
         return switch (slot) {
             case OFFHAND_SLOT -> EquipmentSlot.OFF_HAND;
             case HELMET_SLOT -> EquipmentSlot.HELMET;

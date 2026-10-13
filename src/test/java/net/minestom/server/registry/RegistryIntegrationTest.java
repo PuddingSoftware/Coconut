@@ -1,17 +1,28 @@
 package net.minestom.server.registry;
 
 import net.kyori.adventure.key.Key;
+import net.minestom.server.component.DataComponents;
 import net.minestom.server.gamedata.DataPack;
+import net.minestom.server.network.NetworkBuffer;
 import net.minestom.server.world.DimensionType;
 import net.minestom.testing.Env;
 import net.minestom.testing.EnvTest;
 import org.junit.jupiter.api.Test;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 
 @EnvTest
 public class RegistryIntegrationTest {
+
+    @Test
+    void inlineTagRejectsImpossibleCountBeforeAllocation(Env env) {
+        final NetworkBuffer buffer = NetworkBuffer.resizableBuffer(1, env.process().registries());
+        buffer.write(NetworkBuffer.VAR_INT, Integer.MAX_VALUE);
+        assertThrows(RuntimeException.class, () -> DataComponents.REPAIRABLE.read(buffer));
+    }
 
     @Test
     void testUnnamedPack(Env env) {

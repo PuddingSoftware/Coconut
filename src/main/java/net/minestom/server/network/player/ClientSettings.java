@@ -1,17 +1,20 @@
 package net.minestom.server.network.player;
 
-import net.minestom.server.ServerFlag;
 import net.minestom.server.entity.MainHand;
 import net.minestom.server.entity.Player;
 import net.minestom.server.message.ChatMessageType;
 import net.minestom.server.network.NetworkBuffer;
 import net.minestom.server.network.NetworkBufferTemplate;
+import net.minestom.server.property.ServerProperties;
 import net.minestom.server.utils.MathUtils;
 
 import java.util.Locale;
 import java.util.Objects;
 
-import static net.minestom.server.network.NetworkBuffer.*;
+import static net.minestom.server.network.NetworkBuffer.BOOLEAN;
+import static net.minestom.server.network.NetworkBuffer.BYTE;
+import static net.minestom.server.network.NetworkBuffer.Enum;
+import static net.minestom.server.network.NetworkBuffer.STRING;
 
 public record ClientSettings(Locale locale, byte viewDistance,
                              ChatMessageType chatMessageType, boolean chatColors,
@@ -19,7 +22,7 @@ public record ClientSettings(Locale locale, byte viewDistance,
                              boolean enableTextFiltering, boolean allowServerListings,
                              ClientSettings.ParticleSetting particleSetting) {
     public static final ClientSettings DEFAULT = new ClientSettings(
-            Locale.US, (byte) ServerFlag.CHUNK_VIEW_DISTANCE,
+            Locale.US, ServerProperties.CHUNK_VIEW_DISTANCE.get().byteValue(),
             ChatMessageType.FULL, true,
             (byte) 0x7F, MainHand.RIGHT,
             true, true,
@@ -56,11 +59,12 @@ public record ClientSettings(Locale locale, byte viewDistance,
 
     /**
      * Deprecated in favor of {@link Player#effectiveViewDistance()}
+     *
      * @return The effective view distance, which is the smaller of either the client's view distance settings and the server's max view distance
      */
     @Deprecated
     public int effectiveViewDistance() {
-        return Math.min(viewDistance(), ServerFlag.CHUNK_VIEW_DISTANCE);
+        return Math.min(viewDistance(), ServerProperties.CHUNK_VIEW_DISTANCE.get());
     }
 
     public enum ParticleSetting {

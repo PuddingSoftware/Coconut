@@ -7,7 +7,14 @@ import net.minestom.server.network.packet.client.ClientPacket;
 import net.minestom.server.utils.Rotation;
 import net.minestom.server.utils.validate.Check;
 
-import static net.minestom.server.network.NetworkBuffer.*;
+import static net.minestom.server.network.NetworkBuffer.BLOCK_POSITION;
+import static net.minestom.server.network.NetworkBuffer.BYTE;
+import static net.minestom.server.network.NetworkBuffer.Enum;
+import static net.minestom.server.network.NetworkBuffer.FLOAT;
+import static net.minestom.server.network.NetworkBuffer.STRING;
+import static net.minestom.server.network.NetworkBuffer.VAR_INT;
+import static net.minestom.server.network.NetworkBuffer.VAR_LONG;
+import static net.minestom.server.network.NetworkBuffer.VECTOR3B;
 
 public record ClientUpdateStructureBlockPacket(
         Point location, Action action,
@@ -29,7 +36,7 @@ public record ClientUpdateStructureBlockPacket(
             VAR_INT.transform(ClientUpdateStructureBlockPacket::fromRestrictedRotation, ClientUpdateStructureBlockPacket::toRestrictedRotation), ClientUpdateStructureBlockPacket::rotation,
             STRING, ClientUpdateStructureBlockPacket::metadata,
             FLOAT, ClientUpdateStructureBlockPacket::integrity,
-            LONG, ClientUpdateStructureBlockPacket::seed,
+            VAR_LONG, ClientUpdateStructureBlockPacket::seed,
             BYTE, ClientUpdateStructureBlockPacket::flags,
             ClientUpdateStructureBlockPacket::new
     );

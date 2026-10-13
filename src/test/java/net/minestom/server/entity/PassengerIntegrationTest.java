@@ -8,7 +8,11 @@ import org.junit.jupiter.api.Test;
 
 import java.util.List;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 @EnvTest
 public class PassengerIntegrationTest {
@@ -138,14 +142,14 @@ public class PassengerIntegrationTest {
 
         // Default case
 
-        List<Double> passengerAttachment = vehicle.getEntityType().registry().entityAttachment("PASSENGER");
-        List<Double> vehicleAttachment = passenger.getEntityType().registry().entityAttachment("VEHICLE");
-        assertNotNull(passengerAttachment);
-        assertNotNull(vehicleAttachment);
+        List<Vec> passengerAttachments = vehicle.getEntityType().entityAttachments("PASSENGER");
+        List<Vec> vehicleAttachments = passenger.getEntityType().entityAttachments("VEHICLE");
+        assertNotNull(passengerAttachments);
+        assertNotNull(vehicleAttachments);
 
-        Pos passengerOffset = new Pos(passengerAttachment.get(0), passengerAttachment.get(1), passengerAttachment.get(2));
-        Pos vehicleOffset = new Pos(vehicleAttachment.get(0), vehicleAttachment.get(1), vehicleAttachment.get(2));
-        Pos assumedPosition = vehicle.getPosition().add(passengerOffset).sub(vehicleOffset);
+        Vec passengerAttachment = passengerAttachments.getFirst();
+        Vec vehicleAttachment = vehicleAttachments.getFirst();
+        Pos assumedPosition = vehicle.getPosition().add(passengerAttachment).sub(vehicleAttachment);
         assertEquals(passenger.getPosition(), assumedPosition);
     }
 

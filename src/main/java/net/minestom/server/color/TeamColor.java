@@ -9,6 +9,8 @@ import net.minestom.server.network.NetworkBuffer;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.Range;
 
+import java.util.Locale;
+
 public enum TeamColor implements RGBLike {
     BLACK("black", NamedTextColor.BLACK),
     DARK_BLUE("dark_blue", NamedTextColor.DARK_BLUE),
@@ -32,8 +34,8 @@ public enum TeamColor implements RGBLike {
 
     public static @Nullable TeamColor fromName(String name) {
         try {
-            return valueOf(name.toUpperCase());
-        } catch (IllegalArgumentException e) {
+            return valueOf(name.toUpperCase(Locale.ROOT));
+        } catch (IllegalArgumentException _) {
             return null;
         }
     }
@@ -65,6 +67,7 @@ public enum TeamColor implements RGBLike {
         return this.textColor.blue();
     }
 
+    @Override
     public HSVLike asHSV() {
         return textColor.asHSV();
     }

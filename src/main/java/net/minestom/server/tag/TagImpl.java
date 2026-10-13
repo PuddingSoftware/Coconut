@@ -1,6 +1,10 @@
 package net.minestom.server.tag;
 
-import net.kyori.adventure.nbt.*;
+import net.kyori.adventure.nbt.BinaryTag;
+import net.kyori.adventure.nbt.BinaryTagType;
+import net.kyori.adventure.nbt.BinaryTagTypes;
+import net.kyori.adventure.nbt.CompoundBinaryTag;
+import net.kyori.adventure.nbt.ListBinaryTag;
 import net.minestom.server.utils.collection.AutoIncrementMap;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Contract;
@@ -16,12 +20,12 @@ import java.util.function.UnaryOperator;
 
 @ApiStatus.Internal
 record TagImpl<T>(int index, String key,
-                         Function<?, ?> readComparator,
-                         Serializers.Entry<T, BinaryTag> entry,
-                         // Optional properties
-                         @Nullable Supplier<@Nullable T> defaultValue,
-                         PathEntry @Nullable [] path,
-                         @Nullable UnaryOperator<T> copy, int listScope) implements Tag<T> {
+                  Function<?, ?> readComparator,
+                  Serializers.Entry<T, BinaryTag> entry,
+                  // Optional properties
+                  @Nullable Supplier<@Nullable T> defaultValue,
+                  PathEntry @Nullable [] path,
+                  @Nullable UnaryOperator<T> copy, int listScope) implements Tag<T> {
     private static final AutoIncrementMap<String> INDEX_MAP = new AutoIncrementMap<>();
 
     public TagImpl {
@@ -34,15 +38,16 @@ record TagImpl<T>(int index, String key,
                 null, null, null, 0);
     }
 
+    @SuppressWarnings("unchecked")
     static <T> TagImpl<T> fromSerializer(String key, TagSerializer<T> serializer) {
         if (serializer instanceof TagRecord.Serializer<?> recordSerializer) {
             // Allow fast retrieval
-            //noinspection unchecked
             return (TagImpl<T>) tag(key, recordSerializer.serializerEntry);
         }
         return tag(key, Serializers.fromTagSerializer(serializer));
     }
 
+    @Deprecated
     @Override
     public String getKey() {
         return key;
@@ -68,7 +73,7 @@ record TagImpl<T>(int index, String key,
     @Contract(value = "_, _ -> new", pure = true)
     @Override
     public <R extends @UnknownNullability Object> Tag<R> map(Function<T, R> readMap,
-                          Function<R, T> writeMap) {
+                                                             Function<R, T> writeMap) {
         var entry = this.entry;
         final Function<BinaryTag, R> readFunction = entry.reader().andThen(t -> {
             if (t == null) return null;
@@ -88,6 +93,7 @@ record TagImpl<T>(int index, String key,
 
     @Contract(value = "-> new", pure = true)
     @Override
+    @SuppressWarnings("unchecked")
     public Tag<List<T>> list() {
         var entry = this.entry;
         var readFunction = entry.reader();
@@ -107,6 +113,7 @@ record TagImpl<T>(int index, String key,
                 });
         UnaryOperator<List<T>> co = this.copy != null ? ts -> {
             final int size = ts.size();
+            @SuppressWarnings("unchecked")
             T[] array = (T[]) new Object[size];
             boolean shallowCopy = true;
             for (int i = 0; i < size; i++) {
@@ -130,7 +137,8 @@ record TagImpl<T>(int index, String key,
         PathEntry[] pathEntries = new PathEntry[path.length];
         for (int i = 0; i < path.length; i++) {
             final String name = path[i];
-            if (name == null || name.isEmpty()) throw new IllegalArgumentException("Path must not be empty: " + Arrays.toString(path));
+            if (name == null || name.isEmpty())
+                throw new IllegalArgumentException("Path must not be empty: " + Arrays.toString(path));
             pathEntries[i] = new PathEntry(name, INDEX_MAP.get(name));
         }
         return new TagImpl<>(index, key, readComparator, entry, defaultValue, pathEntries, copy, listScope);
@@ -144,7 +152,7 @@ record TagImpl<T>(int index, String key,
             if (readable == null || (result = entry.read(readable)) == null)
                 return createDefault();
             return result;
-        } catch (ClassCastException e) {
+        } catch (ClassCastException _) {
             return createDefault();
         }
     }
@@ -164,8 +172,8 @@ record TagImpl<T>(int index, String key,
     }
 
     @Override
+    @SuppressWarnings("unchecked")
     public void writeUnsafe(CompoundBinaryTag.Builder nbtCompound, @Nullable Object value) {
-        //noinspection unchecked
         write(nbtCompound, (T) value);
     }
 

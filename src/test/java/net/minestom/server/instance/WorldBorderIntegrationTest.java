@@ -1,11 +1,19 @@
 package net.minestom.server.instance;
 
+import net.minestom.server.MinecraftServer;
+import net.minestom.server.coordinate.Pos;
+import net.minestom.server.coordinate.Vec;
+import net.minestom.server.entity.Entity;
+import net.minestom.server.entity.EntityType;
+import net.minestom.server.network.packet.server.play.WorldBorderLerpSizePacket;
 import net.minestom.testing.Env;
 import net.minestom.testing.EnvTest;
 import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 @EnvTest
 public class WorldBorderIntegrationTest {
@@ -50,11 +58,53 @@ public class WorldBorderIntegrationTest {
     }
 
     @Test
+    public void transitionTimeIsSentInTicks(Env env) {
+        Instance instance = env.createFlatInstance();
+        var connection = env.createConnection();
+        connection.connect(instance, new Pos(0, 42, 0));
+
+        final long ticksPerSecond = 1000 / MinecraftServer.TICK_MS;
+        WorldBorder border = instance.getWorldBorder();
+        instance.setWorldBorder(border.withDiameter(30));
+        var lerp = connection.trackIncoming(WorldBorderLerpSizePacket.class);
+        instance.setWorldBorder(border.withDiameter(10), 1);
+        lerp.assertSingle(packet -> assertEquals(ticksPerSecond, packet.speed()));
+
+        for (int i = 0; i < 5; i++) instance.tick(0);
+        assertEquals(ticksPerSecond - 5, instance.createInitializeWorldBorderPacket().speed());
+    }
+
+    @Test
     public void invalidArguments(Env env) {
         Instance instance = env.createFlatInstance();
 
         WorldBorder border = instance.getWorldBorder();
         assertThrows(IllegalStateException.class, () -> instance.setWorldBorder(border, -1));
         assertThrows(IllegalArgumentException.class, () -> border.withDiameter(-1));
+        assertThrows(IllegalArgumentException.class, () -> border.withDiameter(Double.NaN));
+        assertThrows(IllegalArgumentException.class, () -> border.withCenter(Double.NaN, 0));
+        assertThrows(IllegalArgumentException.class, () -> border.withCenter(0, Double.NaN));
+    }
+
+    @Test
+    public void pointInBoundsExcludesMaximumBound() {
+        WorldBorder border = new WorldBorder(4, 0, 0, 0, 0);
+        assertTrue(border.inBounds(new Vec(-2, 0, -2)));
+        assertTrue(border.inBounds(new Vec(1.999, 0, 1.999)));
+        assertFalse(border.inBounds(new Vec(2, 0, 0)));
+        assertFalse(border.inBounds(new Vec(0, 0, 2)));
+    }
+
+    @Test
+    public void entityBoundsIncludeBoundingBox(Env env) {
+        Instance instance = env.createFlatInstance();
+        WorldBorder border = new WorldBorder(4, 0, 0, 0, 0);
+        Entity entity = new Entity(EntityType.ZOMBIE);
+        double maximumEntityX = 2 - entity.getBoundingBox().maxX();
+        entity.setInstance(instance, new Pos(maximumEntityX, 42, 0)).join();
+
+        assertTrue(border.inBounds(entity.getPosition(), entity.getBoundingBox()));
+        entity.refreshPosition(new Pos(maximumEntityX + Vec.EPSILON, 42, 0));
+        assertFalse(border.inBounds(entity.getPosition(), entity.getBoundingBox()));
     }
 }

@@ -2,7 +2,11 @@ package net.minestom.server.world;
 
 import net.minestom.server.codec.Codec;
 import net.minestom.server.codec.StructCodec;
-import net.minestom.server.registry.*;
+import net.minestom.server.registry.BuiltinRegistries;
+import net.minestom.server.registry.DynamicRegistry;
+import net.minestom.server.registry.Registries;
+import net.minestom.server.registry.RegistryKey;
+import net.minestom.server.registry.RegistryTag;
 import net.minestom.server.utils.IntProvider;
 import net.minestom.server.utils.validate.Check;
 import net.minestom.server.world.attribute.EnvironmentAttribute;
@@ -11,6 +15,7 @@ import net.minestom.server.world.clock.WorldClock;
 import net.minestom.server.world.timeline.Timeline;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Contract;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * <a href="https://minecraft.wiki/w/Dimension_type">Dimension type</a>
@@ -146,7 +151,7 @@ public sealed interface DimensionType extends DimensionTypes permits DimensionTy
         private CardinalLight cardinalLight = CardinalLight.DEFAULT;
         private final EnvironmentAttributeMap.Builder attributes;
         private RegistryTag<Timeline> timelines = RegistryTag.empty();
-        private RegistryKey<WorldClock> defaultClock = null;
+        private @Nullable RegistryKey<WorldClock> defaultClock = null;
 
         private Builder() {
             attributes = EnvironmentAttributeMap.builder();

@@ -7,7 +7,6 @@ import net.minestom.server.utils.MathUtils;
 import net.minestom.server.utils.validate.Check;
 import org.jetbrains.annotations.Contract;
 
-import java.util.Collection;
 import java.util.List;
 
 /**
@@ -40,7 +39,7 @@ public record Weather(float rainLevel, float thunderLevel) {
     }
 
     /**
-     * @return true if {@code rainLevel} is > 0
+     * {@return true if {@code rainLevel} is > 0}
      */
     public boolean isRaining() {
         return rainLevel > 0;
@@ -73,7 +72,7 @@ public record Weather(float rainLevel, float thunderLevel) {
         return new ChangeGameStatePacket(ChangeGameStatePacket.Reason.THUNDER_LEVEL_CHANGE, thunderLevel);
     }
 
-    public Collection<SendablePacket> createWeatherPackets() {
+    public List<SendablePacket> createWeatherPackets() {
         return List.of(createIsRainingPacket(), createRainLevelPacket(), createThunderLevelPacket());
     }
 }

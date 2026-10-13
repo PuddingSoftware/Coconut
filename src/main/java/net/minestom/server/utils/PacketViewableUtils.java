@@ -5,7 +5,6 @@ import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
 import it.unimi.dsi.fastutil.longs.LongArrayList;
 import it.unimi.dsi.fastutil.longs.LongList;
 import net.minestom.server.MinecraftServer;
-import net.minestom.server.ServerFlag;
 import net.minestom.server.Viewable;
 import net.minestom.server.entity.Entity;
 import net.minestom.server.entity.Player;
@@ -16,6 +15,7 @@ import net.minestom.server.network.packet.server.BufferedPacket;
 import net.minestom.server.network.packet.server.ServerPacket;
 import net.minestom.server.network.player.PlayerConnection;
 import net.minestom.server.network.player.PlayerSocketConnection;
+import net.minestom.server.property.ServerProperties;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nullable;
 
@@ -36,11 +36,11 @@ public final class PacketViewableUtils {
             entity.sendPacketToViewers(serverPacket);
             return;
         }
-        if (!ServerFlag.VIEWABLE_PACKET) {
+        if (!ServerProperties.VIEWABLE_PACKET.get()) {
             PacketSendingUtils.sendGroupedPacket(viewable.getViewers(), serverPacket, value -> !Objects.equals(value, entity));
             return;
         }
-        final Player exception = entity instanceof Player ? (Player) entity : null;
+        final Player exception = entity instanceof Player player ? player : null;
         ViewableStorage storage = retrieveStorage(viewable);
         storage.append(serverPacket, exception);
     }
@@ -64,7 +64,7 @@ public final class PacketViewableUtils {
     }
 
     public static void flush() {
-        if (!ServerFlag.VIEWABLE_PACKET) return;
+        if (!ServerProperties.VIEWABLE_PACKET.get()) return;
         Map<Viewable, ViewableStorage> map = storageMap;
         map.entrySet().parallelStream().forEach(entry ->
                 entry.getValue().process(entry.getKey()));
@@ -76,7 +76,8 @@ public final class PacketViewableUtils {
 
     private static final class ViewableStorage {
         private static final ObjectPool<NetworkBuffer> POOL = ObjectPool.pool(
-                () -> NetworkBuffer.resizableBuffer(ServerFlag.POOLED_BUFFER_SIZE, MinecraftServer.process()),
+                () -> NetworkBuffer.resizableBuffer(
+                        ServerProperties.POOLED_BUFFER_SIZE.get(), MinecraftServer.getRegistries()),
                 NetworkBuffer::clear);
         // Player id -> list of offsets to ignore (32:32 bits)
         private final Int2ObjectMap<LongArrayList> entityIdMap = new Int2ObjectOpenHashMap<>();
@@ -88,8 +89,8 @@ public final class PacketViewableUtils {
             PacketWriting.writeFramedPacket(buffer, ConnectionState.PLAY, serverPacket, MinecraftServer.getCompressionThreshold());
             final long end = buffer.writeIndex();
             if (exception != null) {
-                final long offsets = start << 32 | end & 0xFFFFFFFFL;
-                LongList list = entityIdMap.computeIfAbsent(exception.getEntityId(), id -> new LongArrayList());
+                final long offsets = (start << 32) | (end & 0xFFFFFFFFL);
+                LongList list = entityIdMap.computeIfAbsent(exception.getEntityId(), _ -> new LongArrayList());
                 list.add(offsets);
             }
         }

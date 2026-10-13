@@ -4,7 +4,6 @@ import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
 import net.minestom.server.advancements.AdvancementManager;
 import net.minestom.server.adventure.ClickCallbackManager;
 import net.minestom.server.adventure.bossbar.BossBarManager;
-
 import net.minestom.server.command.CommandManager;
 import net.minestom.server.entity.Entity;
 import net.minestom.server.event.EventDispatcher;
@@ -15,19 +14,22 @@ import net.minestom.server.instance.Chunk;
 import net.minestom.server.instance.Instance;
 import net.minestom.server.instance.InstanceManager;
 import net.minestom.server.instance.block.BlockManager;
-
 import net.minestom.server.listener.manager.PacketListenerManager;
 import net.minestom.server.monitoring.EventsJFR;
 import net.minestom.server.monitoring.TickMonitor;
 import net.minestom.server.network.ConnectionManager;
 import net.minestom.server.network.packet.PacketParser;
 import net.minestom.server.network.packet.PacketVanilla;
-import net.minestom.server.network.packet.client.ClientPacket;
 import net.minestom.server.network.socket.Server;
+import net.minestom.server.property.ServerProperties;
 import net.minestom.server.recipe.RecipeManager;
 import net.minestom.server.registry.Registries;
 import net.minestom.server.scoreboard.TeamManager;
-import net.minestom.server.snapshot.*;
+import net.minestom.server.snapshot.EntitySnapshot;
+import net.minestom.server.snapshot.InstanceSnapshot;
+import net.minestom.server.snapshot.ServerSnapshot;
+import net.minestom.server.snapshot.SnapshotImpl;
+import net.minestom.server.snapshot.SnapshotUpdater;
 import net.minestom.server.thread.Acquirable;
 import net.minestom.server.thread.ThreadDispatcher;
 import net.minestom.server.thread.ThreadProvider;
@@ -97,7 +99,7 @@ final class ServerProcessImpl implements ServerProcess, Registries.Delegating {
 
         this.server = new Server(packetParser);
 
-        this.dispatcher = ThreadDispatcher.dispatcher(ThreadProvider.counter(), ServerFlag.DISPATCHER_THREADS);
+        this.dispatcher = ThreadDispatcher.dispatcher(ThreadProvider.counter(), ServerProperties.DISPATCHER_THREADS.get());
         this.ticker = new TickerImpl();
     }
 
@@ -206,10 +208,10 @@ final class ServerProcessImpl implements ServerProcess, Registries.Delegating {
         final String brand = MinecraftServer.getBrandName();
         LOGGER.info("Starting {} ({}) server.", brand, Git.version());
         switch (auth) {
-            case Auth.Offline ignored ->
+            case Auth.Offline _ ->
                     LOGGER.info("Running in offline mode. Beware that this is not secure and players can impersonate each other.");
-            case Auth.Online ignored -> LOGGER.info("Running in online mode with Mojang's authentication.");
-            case Auth.Velocity ignored -> LOGGER.info("Running in Velocity mode with modern IP forwarding.");
+            case Auth.Online _ -> LOGGER.info("Running in online mode with Mojang's authentication.");
+            case Auth.Velocity _ -> LOGGER.info("Running in Velocity mode with modern IP forwarding.");
             case Auth.Bungee bungee -> {
                 if (bungee.guard()) {
                     LOGGER.info("Running in BungeeCord mode, using legacy IP forwarding with Guard enabled.");
@@ -233,7 +235,7 @@ final class ServerProcessImpl implements ServerProcess, Registries.Delegating {
         LOGGER.info("{} server started successfully.", brand);
 
         // Stop the server on SIGINT
-        if (ServerFlag.SHUTDOWN_ON_SIGNAL) Runtime.getRuntime().addShutdownHook(new Thread(this::stop));
+        if (ServerProperties.SHUTDOWN_ON_SIGNAL.get()) Runtime.getRuntime().addShutdownHook(new Thread(this::stop));
     }
 
     @Override

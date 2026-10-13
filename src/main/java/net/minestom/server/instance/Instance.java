@@ -13,7 +13,6 @@ import net.kyori.adventure.pointer.Pointers;
 import net.kyori.adventure.pointer.PointersSupplier;
 import net.kyori.adventure.sound.Sound;
 import net.minestom.server.MinecraftServer;
-import net.minestom.server.ServerFlag;
 import net.minestom.server.ServerProcess;
 import net.minestom.server.Tickable;
 import net.minestom.server.adventure.AdventurePacketConvertor;
@@ -40,9 +39,14 @@ import net.minestom.server.network.packet.server.ServerPacket;
 import net.minestom.server.network.packet.server.play.BlockActionPacket;
 import net.minestom.server.network.packet.server.play.InitializeWorldBorderPacket;
 import net.minestom.server.network.packet.server.play.SetTimePacket;
+import net.minestom.server.property.ServerProperties;
 import net.minestom.server.registry.Registries;
 import net.minestom.server.registry.RegistryKey;
-import net.minestom.server.snapshot.*;
+import net.minestom.server.snapshot.ChunkSnapshot;
+import net.minestom.server.snapshot.InstanceSnapshot;
+import net.minestom.server.snapshot.SnapshotImpl;
+import net.minestom.server.snapshot.SnapshotUpdater;
+import net.minestom.server.snapshot.Snapshotable;
 import net.minestom.server.tag.TagHandler;
 import net.minestom.server.tag.Taggable;
 import net.minestom.server.thread.ThreadDispatcher;
@@ -61,7 +65,16 @@ import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.UnmodifiableView;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Set;
+import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CopyOnWriteArraySet;
 import java.util.concurrent.TimeUnit;
@@ -93,6 +106,9 @@ public abstract class Instance implements Block.Getter, Block.Setter, Biome.Gett
     private final DimensionType cachedDimensionType; // Cached to prevent self-destruction if the registry is changed, and to avoid the lookups.
     private final String dimensionName;
 
+    // Biome blending seed sent to clients
+    private long hashedSeed;
+
     // World border of the instance
     private WorldBorder worldBorder;
     private double targetBorderDiameter;
@@ -116,9 +132,10 @@ public abstract class Instance implements Block.Getter, Block.Setter, Biome.Gett
 
     private final EntityTracker entityTracker = new EntityTrackerImpl();
 
+    @SuppressWarnings("this-escape") // deliberate self registration during construction
     private final ChunkCache blockRetriever = new ChunkCache(this, null, null);
 
-    protected int chunkViewDistance = ServerFlag.CHUNK_VIEW_DISTANCE;
+    protected int chunkViewDistance = ServerProperties.CHUNK_VIEW_DISTANCE.get();
 
     // the uuid of this instance
     protected UUID uuid;
@@ -126,7 +143,7 @@ public abstract class Instance implements Block.Getter, Block.Setter, Biome.Gett
     // instance custom data
     protected TagHandler tagHandler = TagHandler.newHandler();
     private final Scheduler scheduler = Scheduler.newScheduler();
-    private final EventNode<InstanceEvent> eventNode;
+    private final @Nullable EventNode<InstanceEvent> eventNode;
     private final Registries registries;
 
     // the explosion supplier
@@ -137,7 +154,9 @@ public abstract class Instance implements Block.Getter, Block.Setter, Biome.Gett
      *
      * @param uuid          the {@link UUID} of the instance
      * @param dimensionType the {@link DimensionType} of the instance
+     * @deprecated use {@link #Instance(Registries, UUID, RegistryKey)} to choose the registry context explicitly
      */
+    @Deprecated
     public Instance(UUID uuid, RegistryKey<DimensionType> dimensionType) {
         this(uuid, dimensionType, dimensionType.key());
     }
@@ -147,9 +166,23 @@ public abstract class Instance implements Block.Getter, Block.Setter, Biome.Gett
      *
      * @param uuid          the {@link UUID} of the instance
      * @param dimensionType the {@link DimensionType} of the instance
+     * @deprecated use {@link #Instance(Registries, UUID, RegistryKey, Key)} to choose the registry context explicitly
      */
+    @Deprecated
     public Instance(UUID uuid, RegistryKey<DimensionType> dimensionType, Key dimensionName) {
-        this(MinecraftServer.process(), uuid, dimensionType, dimensionName);
+        this(MinecraftServer.getRegistries(), uuid, dimensionType, dimensionName);
+    }
+
+    /**
+     * Creates an instance whose dimension name is taken from its dimension type.
+     *
+     * @param registries the registry context used by the instance
+     * @param uuid the instance ID
+     * @param dimensionType the dimension type
+     * @throws IllegalArgumentException if {@code dimensionType} is not registered in {@code registries}
+     */
+    public Instance(Registries registries, UUID uuid, RegistryKey<DimensionType> dimensionType) {
+        this(registries, uuid, dimensionType, dimensionType.key());
     }
 
     /**
@@ -158,12 +191,14 @@ public abstract class Instance implements Block.Getter, Block.Setter, Biome.Gett
      * @param uuid          the {@link UUID} of the instance
      * @param dimensionType the {@link DimensionType} of the instance
      */
+    @SuppressWarnings("this-escape") // deliberate self registration during construction
     public Instance(Registries registries, UUID uuid, RegistryKey<DimensionType> dimensionType, Key dimensionName) {
         this.registries = registries;
         this.uuid = uuid;
         this.dimensionType = dimensionType;
         this.cachedDimensionType = registries.dimensionType().get(dimensionType);
-        Check.argCondition(cachedDimensionType == null, "The dimension " + dimensionType + " is not registered! Please add it to the registry (`MinecraftServer.getDimensionTypeRegistry().registry(dimensionType)`).");
+        Check.argCondition(cachedDimensionType == null,
+                "The dimension {0} is not registered in the supplied registry context", dimensionType);
         this.dimensionName = dimensionName.asString();
 
         this.clocks = new Object2ObjectArrayMap<>();
@@ -338,6 +373,8 @@ public abstract class Instance implements Block.Getter, Block.Setter, Biome.Gett
     public abstract @Nullable Chunk getChunk(int chunkX, int chunkZ);
 
     /**
+     * Checks whether the chunk at the given chunk coordinates is loaded.
+     *
      * @param chunkX the chunk X
      * @param chunkZ this chunk Z
      * @return true if the chunk is loaded
@@ -347,6 +384,8 @@ public abstract class Instance implements Block.Getter, Block.Setter, Biome.Gett
     }
 
     /**
+     * Checks whether the chunk containing the given point is loaded.
+     *
      * @param point coordinate of a block or other
      * @return true if the chunk is loaded
      */
@@ -488,6 +527,20 @@ public abstract class Instance implements Block.Getter, Block.Setter, Biome.Gett
         return dimensionName;
     }
 
+    /// Returns the seed the client blends biome colors with, `0` by default.
+    public long getHashedSeed() {
+        return hashedSeed;
+    }
+
+    /// Sets the seed the client blends biome colors with, applied to players joining afterwards.
+    ///
+    /// Clients resolve the biome of each block through a seeded zoom, so grass, foliage and water
+    /// colors near a biome border depend on this value. Vanilla sends a SHA-256 hash of the
+    /// world seed.
+    public void setHashedSeed(long hashedSeed) {
+        this.hashedSeed = hashedSeed;
+    }
+
     /// Returns the current world age (aka game time) of this Instance.
     public long getWorldAge() {
         return worldAge;
@@ -518,6 +571,8 @@ public abstract class Instance implements Block.Getter, Block.Setter, Biome.Gett
         if (clock != null) clock.time(time);
     }
 
+    /// Sets the current time (in ticks) of the given clock.
+    ///
     /// @throws IllegalArgumentException if the clock was not registered when the instance was created.
     public void setTime(RegistryKey<WorldClock> clock, long time) {
         clock(clock).time(time);
@@ -542,9 +597,9 @@ public abstract class Instance implements Block.Getter, Block.Setter, Biome.Gett
         var entries = new HashMap<RegistryKey<WorldClock>, SetTimePacket.ClockState>();
         for (var clockInstance : this.clocks.values()) {
             entries.put(clockInstance.clock(), new SetTimePacket.ClockState(
-                clockInstance.time(),
-                clockInstance.partialTick(),
-                clockInstance.effectiveRate()
+                    clockInstance.time(),
+                    clockInstance.partialTick(),
+                    clockInstance.effectiveRate()
             ));
         }
         return new SetTimePacket(worldAge, entries);
@@ -572,11 +627,10 @@ public abstract class Instance implements Block.Getter, Block.Setter, Biome.Gett
      */
     public void setWorldBorder(WorldBorder worldBorder, double transitionTime) {
         Check.stateCondition(transitionTime < 0, "Transition time cannot be lower than 0");
-        long transitionMilliseconds = (long) (transitionTime * 1000);
-        sendNewWorldBorderPackets(worldBorder, transitionMilliseconds);
+        long transitionTicks = (long) (transitionTime * 1000) / MinecraftServer.TICK_MS;
+        sendNewWorldBorderPackets(worldBorder, transitionTicks);
 
         this.targetBorderDiameter = worldBorder.diameter();
-        long transitionTicks = transitionMilliseconds / MinecraftServer.TICK_MS;
         remainingWorldBorderTransitionTicks = transitionTicks;
         if (transitionTicks == 0) this.worldBorder = worldBorder;
         else this.worldBorder = worldBorder.withDiameter(this.worldBorder.diameter());
@@ -594,14 +648,14 @@ public abstract class Instance implements Block.Getter, Block.Setter, Biome.Gett
      * Creates the {@link InitializeWorldBorderPacket} sent to players who join this instance.
      */
     public InitializeWorldBorderPacket createInitializeWorldBorderPacket() {
-        return worldBorder.createInitializePacket(targetBorderDiameter, remainingWorldBorderTransitionTicks * MinecraftServer.TICK_MS);
+        return worldBorder.createInitializePacket(targetBorderDiameter, remainingWorldBorderTransitionTicks);
     }
 
-    private void sendNewWorldBorderPackets(WorldBorder newBorder, long transitionMilliseconds) {
+    private void sendNewWorldBorderPackets(WorldBorder newBorder, long transitionTicks) {
         // Only send the relevant border packets
         if (this.worldBorder.diameter() != newBorder.diameter()) {
-            if (transitionMilliseconds == 0) sendGroupedPacket(newBorder.createSizePacket());
-            else sendGroupedPacket(this.worldBorder.createLerpSizePacket(newBorder.diameter(), transitionMilliseconds));
+            if (transitionTicks == 0) sendGroupedPacket(newBorder.createSizePacket());
+            else sendGroupedPacket(this.worldBorder.createLerpSizePacket(newBorder.diameter(), transitionTicks));
         }
         if (this.worldBorder.centerX() != newBorder.centerX() || this.worldBorder.centerZ() != newBorder.centerZ()) {
             sendGroupedPacket(newBorder.createCenterPacket());
@@ -881,7 +935,7 @@ public abstract class Instance implements Block.Getter, Block.Setter, Biome.Gett
     }
 
     /**
-     * Gets the chunk view distance of this instance, which defaults to {@link ServerFlag#CHUNK_VIEW_DISTANCE}.
+     * Gets the chunk view distance of this instance, which defaults to {@link ServerProperties#CHUNK_VIEW_DISTANCE}.
      *
      * @return The chunk view distance of this instance
      */

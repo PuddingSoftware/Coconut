@@ -21,12 +21,16 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.UnknownNullability;
 
 import java.util.Collection;
+import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.UUID;
 import java.util.concurrent.atomic.AtomicReference;
 
-import static net.minestom.server.coordinate.CoordConversion.*;
+import static net.minestom.server.coordinate.CoordConversion.chunkBlockIndex;
+import static net.minestom.server.coordinate.CoordConversion.chunkIndex;
+import static net.minestom.server.coordinate.CoordConversion.globalToChunk;
+import static net.minestom.server.coordinate.CoordConversion.globalToSectionRelative;
 
 @ApiStatus.Internal
 public final class SnapshotImpl {
@@ -61,7 +65,7 @@ public final class SnapshotImpl {
         }
 
         @Override
-        public Collection<EntitySnapshot> entities() {
+        public List<EntitySnapshot> entities() {
             return new IntMappedArray<>(entitiesIds, id -> server().entity(id));
         }
 
@@ -121,7 +125,7 @@ public final class SnapshotImpl {
         }
 
         @Override
-        public Collection<EntitySnapshot> entities() {
+        public List<EntitySnapshot> entities() {
             return new IntMappedArray<>(entitiesIds, id -> instance().server().entity(id));
         }
     }
@@ -146,12 +150,12 @@ public final class SnapshotImpl {
         }
 
         @Override
-        public Collection<PlayerSnapshot> viewers() {
+        public List<PlayerSnapshot> viewers() {
             return new IntMappedArray<>(viewersId, id -> (PlayerSnapshot) instance().server().entity(id));
         }
 
         @Override
-        public Collection<EntitySnapshot> passengers() {
+        public List<EntitySnapshot> passengers() {
             return new IntMappedArray<>(passengersId, id -> instance().server().entity(id));
         }
 

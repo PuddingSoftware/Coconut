@@ -1,6 +1,9 @@
 package net.minestom.server.registry;
 
 import net.minestom.server.network.NetworkBuffer;
+import net.minestom.server.registry.RegistryTagImpl.Backed;
+import net.minestom.server.registry.RegistryTagImpl.Direct;
+import net.minestom.server.registry.RegistryTagImpl.Empty;
 import net.minestom.server.utils.Either;
 import net.minestom.server.utils.validate.Check;
 
@@ -69,12 +72,12 @@ final class RegistryNetworkTypes {
         @Override
         public void write(NetworkBuffer buffer, RegistryTag<T> value) {
             switch (value) {
-                case net.minestom.server.registry.RegistryTagImpl.Backed<T> backed -> {
+                case Backed<T> backed -> {
                     buffer.write(NetworkBuffer.VAR_INT, 0);
                     buffer.write(NetworkBuffer.KEY, backed.key().key());
                 }
-                case net.minestom.server.registry.RegistryTagImpl.Empty() -> buffer.write(NetworkBuffer.VAR_INT, 1);
-                case net.minestom.server.registry.RegistryTagImpl.Direct(var entries) -> {
+                case Empty() -> buffer.write(NetworkBuffer.VAR_INT, 1);
+                case Direct(var entries) -> {
                     final var registries = Objects.requireNonNull(buffer.registries(), "Buffer is missing registries");
                     final var registry = selector.select(registries);
                     buffer.write(NetworkBuffer.VAR_INT, entries.size() + 1);
@@ -91,23 +94,28 @@ final class RegistryNetworkTypes {
         public RegistryTag<T> read(NetworkBuffer buffer) {
             final var registries = Objects.requireNonNull(buffer.registries(), "Buffer is missing registries");
             final var registry = selector.select(registries);
-            int count = buffer.read(NetworkBuffer.VAR_INT) - 1;
-            if (count < 0) {
+            final int encodedCount = buffer.read(NetworkBuffer.VAR_INT);
+            if (encodedCount == 0) {
                 final var key = buffer.read(NetworkBuffer.KEY);
                 final var tag = registry.getTag(key);
                 Check.stateCondition(tag == null, "No such tag {0} for registry {1}", key, registry.key());
                 return tag;
-            } else if (count == 0) {
+            } else if (encodedCount == 1) {
                 return RegistryTag.empty();
             } else {
-                final List<RegistryKey<T>> keys = new ArrayList<>(count);
+                Check.stateCondition(encodedCount < 0, "Invalid registry tag size: {0}", encodedCount);
+                final int count = encodedCount - 1;
+                Check.stateCondition(count > registry.size(),
+                        "Registry tag size ({0}) is higher than registry size ({1})", count, registry.size());
+                final int initialSize = (int) Math.min(count, buffer.readableBytes());
+                final List<RegistryKey<T>> keys = new ArrayList<>(initialSize);
                 for (int i = 0; i < count; i++) {
                     final int id = buffer.read(NetworkBuffer.VAR_INT);
                     final var key = registry.getKey(id);
                     Check.stateCondition(key == null, "Unknown id {0} for registry {1}", id, registry.key());
                     keys.add(key);
                 }
-                return new net.minestom.server.registry.RegistryTagImpl.Direct<>(keys);
+                return new Direct<>(keys);
             }
         }
     }

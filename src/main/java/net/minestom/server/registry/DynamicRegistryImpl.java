@@ -6,7 +6,6 @@ import net.kyori.adventure.key.Key;
 import net.kyori.adventure.nbt.BinaryTag;
 import net.kyori.adventure.nbt.CompoundBinaryTag;
 import net.minestom.server.MinecraftServer;
-import net.minestom.server.ServerFlag;
 import net.minestom.server.codec.Codec;
 import net.minestom.server.codec.Result;
 import net.minestom.server.codec.Transcoder;
@@ -15,6 +14,7 @@ import net.minestom.server.network.packet.server.CachedPacket;
 import net.minestom.server.network.packet.server.SendablePacket;
 import net.minestom.server.network.packet.server.common.TagsPacket;
 import net.minestom.server.network.packet.server.configuration.RegistryDataPacket;
+import net.minestom.server.property.ServerProperties;
 import net.minestom.server.utils.json.JsonUtil;
 import net.minestom.server.utils.validate.Check;
 import org.jetbrains.annotations.ApiStatus;
@@ -25,7 +25,14 @@ import org.jetbrains.annotations.UnknownNullability;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
 import java.util.concurrent.ConcurrentHashMap;
 
 @ApiStatus.Internal
@@ -35,7 +42,7 @@ final class DynamicRegistryImpl<T> implements DynamicRegistry<T> {
     // Also, what use case requires you to mutate registries faster than one monitor?
     private static final Object REGISTRY_LOCK = new Object();
 
-    private volatile Registries registries = null;
+    private volatile @Nullable Registries registries = null;
     private final CachedPacket vanillaRegistryDataPacket = new CachedPacket(() -> createRegistryDataPacket(registries, true));
 
     private final List<T> idToValue;
@@ -325,9 +332,10 @@ final class DynamicRegistryImpl<T> implements DynamicRegistry<T> {
     }
 
     static boolean canFreeze() {
-        return !ServerFlag.REGISTRY_UNSAFE_OPS && !ServerFlag.INSIDE_TEST;
+        return !ServerProperties.REGISTRY_UNSAFE_OPS.get() && !ServerProperties.INSIDE_TEST.get();
     }
 
+    @SuppressWarnings("removal")
     void loadStaticJsonRegistry(@Nullable Registries registries, @Nullable Comparator<String> idComparator, Codec<T> codec) {
         // Tags must exist before entries are decoded because registry codecs can resolve tags while loading values.
         tags.putAll(RegistryData.loadTags(key()));

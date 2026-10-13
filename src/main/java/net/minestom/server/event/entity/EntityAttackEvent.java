@@ -24,7 +24,7 @@ public class EntityAttackEvent implements EntityInstanceEvent {
     }
 
     /**
-     * @return the target of the attack
+     * {@return the target of the attack}
      */
     public Entity getTarget() {
         return target;

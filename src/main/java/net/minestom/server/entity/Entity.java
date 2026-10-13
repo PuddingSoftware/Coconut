@@ -10,8 +10,17 @@ import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.event.HoverEvent;
 import net.kyori.adventure.text.event.HoverEvent.ShowEntity;
 import net.kyori.adventure.text.event.HoverEventSource;
-import net.minestom.server.*;
-import net.minestom.server.collision.*;
+import net.minestom.server.MinecraftServer;
+import net.minestom.server.ServerProcess;
+import net.minestom.server.Tickable;
+import net.minestom.server.Viewable;
+import net.minestom.server.collision.Aerodynamics;
+import net.minestom.server.collision.BoundingBox;
+import net.minestom.server.collision.CollisionUtils;
+import net.minestom.server.collision.PhysicsResult;
+import net.minestom.server.collision.PhysicsUtils;
+import net.minestom.server.collision.Shape;
+import net.minestom.server.collision.SweepResult;
 import net.minestom.server.component.DataComponent;
 import net.minestom.server.component.DataComponents;
 import net.minestom.server.coordinate.CoordConversion;
@@ -27,7 +36,14 @@ import net.minestom.server.event.EventDispatcher;
 import net.minestom.server.event.EventFilter;
 import net.minestom.server.event.EventHandler;
 import net.minestom.server.event.EventNode;
-import net.minestom.server.event.entity.*;
+import net.minestom.server.event.entity.EntityDeathEvent;
+import net.minestom.server.event.entity.EntityDespawnEvent;
+import net.minestom.server.event.entity.EntityPotionAddEvent;
+import net.minestom.server.event.entity.EntityPotionRemoveEvent;
+import net.minestom.server.event.entity.EntitySpawnEvent;
+import net.minestom.server.event.entity.EntityTeleportEvent;
+import net.minestom.server.event.entity.EntityTickEvent;
+import net.minestom.server.event.entity.EntityVelocityEvent;
 import net.minestom.server.event.instance.AddEntityToInstanceEvent;
 import net.minestom.server.event.instance.RemoveEntityFromInstanceEvent;
 import net.minestom.server.event.trait.EntityEvent;
@@ -43,10 +59,22 @@ import net.minestom.server.monitoring.EventsJFR;
 import net.minestom.server.network.packet.server.CachedPacket;
 import net.minestom.server.network.packet.server.SendablePacket;
 import net.minestom.server.network.packet.server.play.*;
+import net.minestom.server.network.packet.server.play.AttachEntityPacket;
+import net.minestom.server.network.packet.server.play.DestroyEntitiesPacket;
+import net.minestom.server.network.packet.server.play.EntityHeadLookPacket;
+import net.minestom.server.network.packet.server.play.EntityMetaDataPacket;
+import net.minestom.server.network.packet.server.play.EntityPositionAndRotationPacket;
+import net.minestom.server.network.packet.server.play.EntityPositionSyncPacket;
+import net.minestom.server.network.packet.server.play.EntityRotationPacket;
+import net.minestom.server.network.packet.server.play.EntityStatusPacket;
+import net.minestom.server.network.packet.server.play.EntityTeleportPacket;
+import net.minestom.server.network.packet.server.play.EntityVelocityPacket;
+import net.minestom.server.network.packet.server.play.SetPassengersPacket;
+import net.minestom.server.network.packet.server.play.SpawnEntityPacket;
 import net.minestom.server.potion.Potion;
 import net.minestom.server.potion.PotionEffect;
 import net.minestom.server.potion.TimedPotion;
-import net.minestom.server.registry.RegistryData;
+import net.minestom.server.property.ServerProperties;
 import net.minestom.server.snapshot.EntitySnapshot;
 import net.minestom.server.snapshot.SnapshotImpl;
 import net.minestom.server.snapshot.SnapshotUpdater;
@@ -70,11 +98,23 @@ import net.minestom.server.utils.position.PositionUtils;
 import net.minestom.server.utils.time.TimeUnit;
 import net.minestom.server.utils.validate.Check;
 import org.intellij.lang.annotations.MagicConstant;
-import org.jetbrains.annotations.*;
+import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.Contract;
+import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.UnknownNullability;
 
 import java.time.Duration;
 import java.time.temporal.TemporalUnit;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Optional;
+import java.util.Set;
+import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.CopyOnWriteArraySet;
@@ -115,6 +155,7 @@ public class Entity implements Viewable, Tickable, Schedulable, Snapshotable, Ev
             EntityType.LINGERING_POTION, EntityType.AREA_EFFECT_CLOUD);
     private static final Set<EntityType> NO_ENTITY_COLLISION_ENTITIES = Set.of(EntityType.TEXT_DISPLAY, EntityType.ITEM_DISPLAY,
             EntityType.BLOCK_DISPLAY);
+    @SuppressWarnings("this-escape") // deliberate self registration, entities are not usable until spawned
     private final CachedPacket destroyPacketCache = new CachedPacket(() -> new DestroyEntitiesPacket(getEntityId()));
 
     @Nullable
@@ -174,9 +215,12 @@ public class Entity implements Viewable, Tickable, Schedulable, Snapshotable, Ev
         }
     };
 
+    @SuppressWarnings("this-escape") // deliberate self registration, entities are not usable until spawned
+    protected final EntityView viewEngine = new EntityView(this);
+    protected final Set<Player> viewers = viewEngine.set;
     private final TagHandler tagHandler = TagHandler.newHandler();
     private final Scheduler scheduler = Scheduler.newScheduler();
-    private final EventNode<EntityEvent> eventNode;
+    private final @Nullable EventNode<EntityEvent> eventNode;
 
     private final UUID uuid;
     private boolean isActive; // False if entity has only been instanced without being added somewhere
@@ -191,9 +235,10 @@ public class Entity implements Viewable, Tickable, Schedulable, Snapshotable, Ev
     protected EntityType entityType; // UNSAFE to change, modify at your own risk
 
     // Network synchronization, send the absolute position of the entity every n ticks
-    private long synchronizationTicks = ServerFlag.ENTITY_SYNCHRONIZATION_TICKS;
+    private long synchronizationTicks = ServerProperties.ENTITY_SYNCHRONIZATION_TICKS.get();
     private long nextSynchronizationTick = synchronizationTicks;
 
+    @SuppressWarnings("this-escape") // deliberate self registration, entities are not usable until spawned
     protected MetadataHolder metadata = new MetadataHolder(this::notifyMetadataChanges);
     protected EntityMeta entityMeta;
 
@@ -202,8 +247,10 @@ public class Entity implements Viewable, Tickable, Schedulable, Snapshotable, Ev
     // Tick related
     private long ticks;
 
+    @SuppressWarnings("this-escape") // deliberate self registration, entities are not usable until spawned
     private final Acquirable<Entity> acquirable = Acquirable.unassigned(this);
 
+    @SuppressWarnings("this-escape") // deliberate self registration, entities are not usable until spawned
     public Entity(EntityType entityType, UUID uuid) {
         this.id = generateId();
         this.entityType = entityType;
@@ -215,13 +262,12 @@ public class Entity implements Viewable, Tickable, Schedulable, Snapshotable, Ev
 
         this.entityMeta = MetadataHolder.createMeta(entityType, this, this.metadata);
 
-        final RegistryData.EntityEntry registry = entityType.registry();
-        setBoundingBox(entityType.registry().boundingBox());
+        setBoundingBox(entityType.boundingBox());
 
         this.aerodynamics = new Aerodynamics(
-                registry.acceleration(),
-                registry.horizontalAirResistance(),
-                registry.verticalAirResistance());
+                entityType.acceleration(),
+                entityType.horizontalAirResistance(),
+                entityType.verticalAirResistance());
 
         final ServerProcess process = MinecraftServer.process();
         if (process != null) {
@@ -667,14 +713,14 @@ public class Entity implements Viewable, Tickable, Schedulable, Snapshotable, Ev
         boolean entityIsPlayer = this instanceof Player;
         boolean entityFlying = entityIsPlayer && ((Player) this).isFlying();
         final Block.Getter chunkCache = new ChunkCache(instance, currentChunk, Block.STONE);
-        PhysicsResult physicsResult = PhysicsUtils.simulateMovement(position, velocity.div(ServerFlag.SERVER_TICKS_PER_SECOND), boundingBox,
+        PhysicsResult physicsResult = PhysicsUtils.simulateMovement(position, velocity.div(ServerProperties.SERVER_TICKS_PER_SECOND.get()), boundingBox,
                 instance.getWorldBorder(), chunkCache, aerodynamics, hasNoGravity(), hasPhysics, onGround, entityFlying, 0.6, previousPhysicsResult);
         this.previousPhysicsResult = physicsResult;
 
         Chunk finalChunk = ChunkUtils.retrieve(instance, currentChunk, physicsResult.newPosition());
         if (!ChunkUtils.isLoaded(finalChunk)) return;
 
-        velocity = physicsResult.newVelocity().mul(ServerFlag.SERVER_TICKS_PER_SECOND);
+        velocity = physicsResult.newVelocity().mul(ServerProperties.SERVER_TICKS_PER_SECOND.get());
         if (!(this instanceof Player)) {
             onGround = physicsResult.isOnGround();
             refreshPosition(physicsResult.newPosition(), true, !SYNCHRONIZE_ONLY_ENTITIES.contains(entityType));
@@ -705,8 +751,9 @@ public class Entity implements Viewable, Tickable, Schedulable, Snapshotable, Ev
                     if (handler != null) {
                         // Move a small amount towards the entity. If the entity is within 0.01 blocks of the block, touch will trigger
                         Vec blockPos = new Vec(x, y, z);
-                        Point blockEntityVector = (blockPos.sub(position)).normalize().mul(0.01);
-                        if (block.registry().collisionShape().intersectBox(position.sub(blockPos).add(blockEntityVector), boundingBox)) {
+                        Point blockEntityVector = blockPos.sub(position).normalize().mul(0.01);
+                        if (block.collisionShape()
+                                .intersectBox(position.sub(blockPos).add(blockEntityVector), boundingBox)) {
                             handler.onTouch(new BlockHandler.Touch(block, instance, new Vec(x, y, z), this));
                         }
                     }
@@ -1526,7 +1573,7 @@ public class Entity implements Viewable, Tickable, Schedulable, Snapshotable, Ev
      * @return the entity eye height
      */
     public double getEyeHeight() {
-        return getPose() == EntityPose.SLEEPING ? 0.2 : entityType.registry().eyeHeight();
+        return getPose() == EntityPose.SLEEPING ? 0.2 : entityType.eyeHeight();
     }
 
     /**
@@ -1627,7 +1674,7 @@ public class Entity implements Viewable, Tickable, Schedulable, Snapshotable, Ev
         }
 
         // Remove passengers if any (also done with LivingEntity#kill)
-        Collection<Entity> passengers = getPassengers();
+        final List<Entity> passengers = getPassengers();
         if (!passengers.isEmpty()) passengers.forEach(this::removePassenger);
         final Entity vehicle = this.vehicle;
         if (vehicle != null) vehicle.removePassenger(this);
@@ -1689,7 +1736,7 @@ public class Entity implements Viewable, Tickable, Schedulable, Snapshotable, Ev
     }
 
     protected Vec getVelocityForPacket() {
-        return this.velocity.div(ServerFlag.SERVER_TICKS_PER_SECOND);
+        return this.velocity.div(ServerProperties.SERVER_TICKS_PER_SECOND.get());
     }
 
     protected SpawnEntityPacket getSpawnPacket() {
@@ -1756,7 +1803,7 @@ public class Entity implements Viewable, Tickable, Schedulable, Snapshotable, Ev
     }
 
     /**
-     * Returns the current synchronization interval. The default value is {@link ServerFlag#ENTITY_SYNCHRONIZATION_TICKS}
+     * Returns the current synchronization interval. The default value is {@link ServerProperties#ENTITY_SYNCHRONIZATION_TICKS}
      * but can be overridden per entity with {@link #setSynchronizationTicks(long)}.
      *
      * @return The current synchronization ticks
@@ -1816,9 +1863,9 @@ public class Entity implements Viewable, Tickable, Schedulable, Snapshotable, Ev
     public void takeKnockback(float strength, final double x, final double z) {
         if (strength > 0) {
             //TODO check possible side effects of unnatural TPS (other than 20TPS)
-            strength *= ServerFlag.SERVER_TICKS_PER_SECOND;
+            strength *= ServerProperties.SERVER_TICKS_PER_SECOND.get();
             final Vec velocityModifier = new Vec(x, z).normalize().mul(strength);
-            final double verticalLimit = .4d * ServerFlag.SERVER_TICKS_PER_SECOND;
+            final double verticalLimit = .4d * ServerProperties.SERVER_TICKS_PER_SECOND.get();
 
             setVelocity(new Vec(velocity.x() / 2d - velocityModifier.x(),
                     onGround ? Math.min(verticalLimit, velocity.y() / 2d + strength) : velocity.y(),
@@ -1843,7 +1890,7 @@ public class Entity implements Viewable, Tickable, Schedulable, Snapshotable, Ev
         var it = new BlockIterator(this, maxDistance);
         while (it.hasNext()) {
             final Point position = it.next();
-            if (!instance.getBlock(position).isAir()) blocks.add(position);
+            if (!instance.getBlock(position).air()) blocks.add(position);
         }
         return blocks;
     }
@@ -1872,6 +1919,8 @@ public class Entity implements Viewable, Tickable, Schedulable, Snapshotable, Ev
     }
 
     /**
+     * Checks whether this entity has an unobstructed line of sight to the given one.
+     *
      * @param entity the entity to be checked.
      * @return if the current entity has line of sight to the given one.
      * @see Entity#hasLineOfSight(Entity, boolean)
@@ -1959,6 +2008,7 @@ public class Entity implements Viewable, Tickable, Schedulable, Snapshotable, Ev
      */
     @Deprecated
     @ApiStatus.Experimental
+    @SuppressWarnings("unchecked")
     public <T extends Entity> Acquirable<T> getAcquirable() {
         return (Acquirable<T>) acquirable;
     }

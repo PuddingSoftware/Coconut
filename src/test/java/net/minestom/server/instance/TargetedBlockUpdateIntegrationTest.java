@@ -1,12 +1,11 @@
 package net.minestom.server.instance;
 
+import net.kyori.adventure.nbt.CompoundBinaryTag;
+import net.minestom.server.coordinate.BlockVec;
 import net.minestom.server.coordinate.Point;
 import net.minestom.server.coordinate.Pos;
 import net.minestom.server.instance.batch.ChunkBatch;
 import net.minestom.server.instance.block.Block;
-import net.kyori.adventure.nbt.CompoundBinaryTag;
-import net.minestom.server.coordinate.BlockVec;
-import net.minestom.server.coordinate.Vec;
 import net.minestom.server.instance.block.BlockEntityType;
 import net.minestom.server.network.packet.server.play.BlockEntityDataPacket;
 import net.minestom.server.network.packet.server.play.ChunkDataPacket;
@@ -44,7 +43,7 @@ public class TargetedBlockUpdateIntegrationTest {
         batch.setBlock(1, 40, 1, Block.STONE);
         batch.setBlock(2, 42, 2, Block.STONE);
         CountDownLatch latch = new CountDownLatch(1);
-        batch.apply(instance, 0, 0, c -> latch.countDown());
+        batch.apply(instance, 0, 0, _ -> latch.countDown());
         env.tickWhile(() -> latch.getCount() > 0, Duration.ofSeconds(1));
 
         multiBlock.assertCount(1);

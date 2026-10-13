@@ -4,15 +4,15 @@ import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
 import it.unimi.dsi.fastutil.longs.LongArrayList;
 import it.unimi.dsi.fastutil.longs.LongList;
+import net.kyori.adventure.nbt.CompoundBinaryTag;
 import net.minestom.server.MinecraftServer;
 import net.minestom.server.coordinate.BlockVec;
 import net.minestom.server.coordinate.CoordConversion;
+import net.minestom.server.coordinate.Point;
 import net.minestom.server.instance.Chunk;
 import net.minestom.server.instance.Instance;
 import net.minestom.server.instance.InstanceContainer;
 import net.minestom.server.instance.block.Block;
-import net.kyori.adventure.nbt.CompoundBinaryTag;
-import net.minestom.server.coordinate.Point;
 import net.minestom.server.instance.block.BlockEntityType;
 import net.minestom.server.network.packet.server.play.BlockEntityDataPacket;
 import net.minestom.server.network.packet.server.play.MultiBlockChangePacket;
@@ -215,7 +215,7 @@ public class ChunkBatch implements Batch<ChunkCallback> {
      * @param index the block position computed using {@link CoordConversion#chunkBlockIndex(int, int, int)}
      * @param block the block to place
      */
-    private void apply(Chunk chunk, int index, Block block, @Nullable ChunkBatch inverse) {
+    private static void apply(Chunk chunk, int index, Block block, @Nullable ChunkBatch inverse) {
         final int x = CoordConversion.chunkBlockIndexGetX(index);
         final int y = CoordConversion.chunkBlockIndexGetY(index);
         final int z = CoordConversion.chunkBlockIndexGetZ(index);
@@ -240,9 +240,9 @@ public class ChunkBatch implements Batch<ChunkCallback> {
             }
         }
 
-        if (instance instanceof InstanceContainer) {
+        if (instance instanceof InstanceContainer container) {
             // FIXME: put method in Instance instead
-            ((InstanceContainer) instance).refreshLastBlockChangeTime();
+            container.refreshLastBlockChangeTime();
         }
 
         if (callback != null) {
@@ -270,7 +270,7 @@ public class ChunkBatch implements Batch<ChunkCallback> {
                 bySection.computeIfAbsent(CoordConversion.globalToChunk(y), _ -> new LongArrayList()).add(packed);
 
                 final Block block = entry.getValue();
-                final BlockEntityType blockEntityType = block.registry().blockEntityType();
+                final BlockEntityType blockEntityType = block.blockEntityType();
                 if (blockEntityType != null) {
                     final Point blockPosition = new BlockVec(x + chunkX * 16, y, z + chunkZ * 16);
                     final CompoundBinaryTag data = BlockUtils.extractClientNbt(block);

@@ -3,7 +3,6 @@ package net.minestom.server.item.armor;
 import net.kyori.adventure.text.Component;
 import net.minestom.server.codec.Codec;
 import net.minestom.server.codec.StructCodec;
-import net.minestom.server.item.Material;
 import net.minestom.server.network.NetworkBuffer;
 import net.minestom.server.network.NetworkBufferTemplate;
 import net.minestom.server.registry.BuiltinRegistries;
@@ -61,7 +60,6 @@ public sealed interface TrimMaterial extends Holder.Direct<TrimMaterial>, TrimMa
 
     final class Builder {
         private String assetName;
-        private Material ingredient;
         private final Map<String, String> overrideArmorMaterials = new HashMap<>();
         private Component description;
 

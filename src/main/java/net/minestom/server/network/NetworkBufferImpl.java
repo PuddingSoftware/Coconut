@@ -8,7 +8,8 @@ import org.jetbrains.annotations.UnknownNullability;
 
 import javax.crypto.Cipher;
 import javax.crypto.ShortBufferException;
-import java.io.*;
+import java.io.EOFException;
+import java.io.IOException;
 import java.lang.foreign.Arena;
 import java.lang.foreign.MemorySegment;
 import java.lang.foreign.ValueLayout;
@@ -97,7 +98,7 @@ final class NetworkBufferImpl implements NetworkBuffer {
     }
 
     @Override
-    public byte[] extractBytes(Consumer<NetworkBuffer> extractor) {
+    public byte[] extractBytes(Consumer<? super NetworkBuffer> extractor) {
         final MemorySegment segment = this.segment;
         assertDummy(segment);
         final long startingPosition = readIndex();
@@ -370,11 +371,6 @@ final class NetworkBufferImpl implements NetworkBuffer {
     }
 
     @Override
-    public IOView ioView() {
-        return new IOView(this);
-    }
-
-    @Override
     public String toString() {
         return String.format("NetworkBuffer{r%d|w%d->%d, registries=%s, autoResize=%s, readOnly=%s}",
                 readIndex, writeIndex, capacity(), registries != null, autoResize != null, isReadOnly());
@@ -423,6 +419,18 @@ final class NetworkBufferImpl implements NetworkBuffer {
         return segment.get(SHORT_LAYOUT, index);
     }
 
+    void _putShorts(long index, short[] value) {
+        final MemorySegment segment = this.segment;
+        if (isDummy(segment)) return;
+        MemorySegment.copy(value, 0, segment, SHORT_LAYOUT, index, value.length);
+    }
+
+    void _getShorts(long index, short[] value) {
+        final MemorySegment segment = this.segment;
+        assertDummy(segment);
+        MemorySegment.copy(segment, SHORT_LAYOUT, index, value, 0, value.length);
+    }
+
     void _putInt(long index, int value) {
         final MemorySegment segment = this.segment;
         if (isDummy(segment)) return;
@@ -433,6 +441,18 @@ final class NetworkBufferImpl implements NetworkBuffer {
         final MemorySegment segment = this.segment;
         assertDummy(segment);
         return segment.get(INT_LAYOUT, index);
+    }
+
+    void _putInts(long index, int[] value) {
+        final MemorySegment segment = this.segment;
+        if (isDummy(segment)) return;
+        MemorySegment.copy(value, 0, segment, INT_LAYOUT, index, value.length);
+    }
+
+    void _getInts(long index, int[] value) {
+        final MemorySegment segment = this.segment;
+        assertDummy(segment);
+        MemorySegment.copy(segment, INT_LAYOUT, index, value, 0, value.length);
     }
 
     void _putLong(long index, long value) {
@@ -447,6 +467,18 @@ final class NetworkBufferImpl implements NetworkBuffer {
         return segment.get(LONG_LAYOUT, index);
     }
 
+    void _putLongs(long index, long[] value) {
+        final MemorySegment segment = this.segment;
+        if (isDummy(segment)) return;
+        MemorySegment.copy(value, 0, segment, LONG_LAYOUT, index, value.length);
+    }
+
+    void _getLongs(long index, long[] value) {
+        final MemorySegment segment = this.segment;
+        assertDummy(segment);
+        MemorySegment.copy(segment, LONG_LAYOUT, index, value, 0, value.length);
+    }
+
     void _putFloat(long index, float value) {
         final MemorySegment segment = this.segment;
         if (isDummy(segment)) return;
@@ -459,6 +491,18 @@ final class NetworkBufferImpl implements NetworkBuffer {
         return segment.get(FLOAT_LAYOUT, index);
     }
 
+    void _putFloats(long index, float[] value) {
+        final MemorySegment segment = this.segment;
+        if (isDummy(segment)) return;
+        MemorySegment.copy(value, 0, segment, FLOAT_LAYOUT, index, value.length);
+    }
+
+    void _getFloats(long index, float[] value) {
+        final MemorySegment segment = this.segment;
+        assertDummy(segment);
+        MemorySegment.copy(segment, FLOAT_LAYOUT, index, value, 0, value.length);
+    }
+
     void _putDouble(long index, double value) {
         final MemorySegment segment = this.segment;
         if (isDummy(segment)) return;
@@ -469,6 +513,18 @@ final class NetworkBufferImpl implements NetworkBuffer {
         final MemorySegment segment = this.segment;
         assertDummy(segment);
         return segment.get(DOUBLE_LAYOUT, index);
+    }
+
+    void _putDoubles(long index, double[] value) {
+        final MemorySegment segment = this.segment;
+        if (isDummy(segment)) return;
+        MemorySegment.copy(value, 0, segment, DOUBLE_LAYOUT, index, value.length);
+    }
+
+    void _getDoubles(long index, double[] value) {
+        final MemorySegment segment = this.segment;
+        assertDummy(segment);
+        MemorySegment.copy(segment, DOUBLE_LAYOUT, index, value, 0, value.length);
     }
 
     static NetworkBuffer wrap(MemorySegment segment, long readIndex, long writeIndex, @Nullable Registries registries) {
@@ -562,171 +618,5 @@ final class NetworkBufferImpl implements NetworkBuffer {
 
     static NetworkBufferImpl impl(NetworkBuffer buffer) {
         return (NetworkBufferImpl) buffer;
-    }
-
-    // Use a record for final field trusting, hopefully better scalar replacement, to avoid caching IOView
-    record IOView(NetworkBufferImpl buffer) implements NetworkBuffer.IOView {
-        @Override
-        public void readFully(byte[] bytes) {
-            readFully(bytes, 0, bytes.length);
-        }
-
-        @Override
-        public void readFully(byte[] bytes, int off, int len) {
-            Objects.requireNonNull(bytes, "bytes");
-            var buffer = buffer();
-            buffer.ensureReadable(len);
-            buffer.copyTo(buffer.readIndex(), bytes, off, len);
-            buffer.advanceRead(len);
-        }
-
-        @Override
-        public int skipBytes(int n) {
-            if (n <= 0) return 0;
-            var buffer = buffer();
-            n = (int) Math.min(n, buffer.readableBytes());
-            buffer.advanceRead(n);
-            return n;
-        }
-
-        @Override
-        public boolean readBoolean() {
-            return buffer().read(BOOLEAN);
-        }
-
-        @Override
-        public byte readByte() {
-            return buffer().read(BYTE);
-        }
-
-        @Override
-        public int readUnsignedByte() {
-            return buffer().read(UNSIGNED_BYTE);
-        }
-
-        @Override
-        public short readShort() {
-            return buffer().read(SHORT);
-        }
-
-        @Override
-        public int readUnsignedShort() {
-            return buffer().read(UNSIGNED_SHORT);
-        }
-
-        @Override
-        public char readChar() {
-            return (char) readUnsignedShort();
-        }
-
-        @Override
-        public int readInt() {
-            return buffer().read(INT);
-        }
-
-        @Override
-        public long readLong() {
-            return buffer().read(LONG);
-        }
-
-        @Override
-        public float readFloat() {
-            return buffer().read(FLOAT);
-        }
-
-        @Override
-        public double readDouble() {
-            return buffer().read(DOUBLE);
-        }
-
-        @Override
-        public String readUTF() {
-            return buffer().read(STRING_IO_UTF8);
-        }
-
-        @Override
-        public void write(int lower) {
-            buffer().write(BYTE, (byte) lower);
-        }
-
-        @Override
-        public void write(byte[] bytes) {
-            Objects.requireNonNull(bytes, "bytes");
-            buffer().write(RAW_BYTES, bytes);
-        }
-
-        @Override
-        public void write(byte[] bytes, int off, int len) {
-            Objects.requireNonNull(bytes, "bytes");
-            if (len == 0) return;
-            var buffer = buffer();
-            buffer.ensureWritable(len); // Small intrinsic like RAW_BYTES
-            buffer._putBytes(buffer.writeIndex(), bytes, off, len);
-            buffer.advanceWrite(len);
-        }
-
-        @Override
-        public void writeBoolean(boolean value) {
-            buffer().write(BOOLEAN, value);
-        }
-
-        @Override
-        public void writeByte(int value) {
-            buffer().write(BYTE, (byte) value);
-        }
-
-        @Override
-        public void writeShort(int value) {
-            buffer().write(UNSIGNED_SHORT, value);
-        }
-
-        @Override
-        public void writeChar(int value) {
-            buffer().write(UNSIGNED_SHORT, value);
-        }
-
-        @Override
-        public void writeInt(int value) {
-            buffer().write(INT, value);
-        }
-
-        @Override
-        public void writeLong(long value) {
-            buffer().write(LONG, value);
-        }
-
-        @Override
-        public void writeFloat(float value) {
-            buffer().write(FLOAT, value);
-        }
-
-        @Override
-        public void writeDouble(double value) {
-            buffer().write(DOUBLE, value);
-        }
-
-        @Override
-        public void writeBytes(String value) {
-            Objects.requireNonNull(value, "value");
-            var buffer = buffer();
-            for (int i = 0; i < value.length(); i++) {
-                buffer.write(BYTE, (byte) value.charAt(i)); // Low byte only
-            }
-        }
-
-        @Override
-        public void writeChars(String value) {
-            Objects.requireNonNull(value, "value");
-            var buffer = buffer();
-            for (int i = 0; i < value.length(); i++) {
-                buffer.write(UNSIGNED_SHORT, (int) value.charAt(i));
-            }
-        }
-
-        @Override
-        public void writeUTF(String value) {
-            Objects.requireNonNull(value, "value");
-            buffer().write(STRING_IO_UTF8, value);
-        }
     }
 }

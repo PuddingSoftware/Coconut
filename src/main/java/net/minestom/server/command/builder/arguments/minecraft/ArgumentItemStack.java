@@ -68,7 +68,8 @@ public class ArgumentItemStack extends Argument<ItemStack> {
         // Parse the declared components
         if (reader.peek() == '[') {
             reader.consume('[');
-            final Transcoder<BinaryTag> coder = new RegistryTranscoder<>(Transcoder.NBT, MinecraftServer.process());
+            final Transcoder<BinaryTag> coder = new RegistryTranscoder<>(
+                    Transcoder.NBT, MinecraftServer.getRegistries());
             do {
                 final Key componentId = reader.readKey();
                 final DataComponent<?> component = DataComponent.fromKey(componentId);
@@ -78,7 +79,13 @@ public class ArgumentItemStack extends Argument<ItemStack> {
                 reader.consume('=');
 
                 final Result<Object> componentValueResult = (Result<Object>) component.decode(coder, reader.readTag());
-                components.set((DataComponent<Object>) component, componentValueResult.orElseThrow());
+                final Object componentValue = switch (componentValueResult) {
+                    case Result.Ok(var value) -> value;
+                    case Result.Error(var message) ->
+                            throw new ArgumentSyntaxException(
+                                    "Invalid item component: " + message, input, INVALID_COMPONENT);
+                };
+                components.set((DataComponent<Object>) component, componentValue);
 
                 if (reader.peek() != ']')
                     reader.consume(',');
@@ -114,15 +121,15 @@ public class ArgumentItemStack extends Argument<ItemStack> {
         private String input;
         private int index = 0;
 
-        public StringReader(String input) {
+        StringReader(String input) {
             this.input = input;
         }
 
-        public boolean hasMore() {
+        boolean hasMore() {
             return index < input.length();
         }
 
-        public char peek() {
+        char peek() {
             if (!hasMore()) {
                 throw new ArgumentSyntaxException("Unexpected end of input", input, INVALID_NBT);
             }
@@ -130,7 +137,7 @@ public class ArgumentItemStack extends Argument<ItemStack> {
             return input.charAt(index);
         }
 
-        public void consume(char c) {
+        void consume(char c) {
             char next = peek();
             if (next != c) {
                 throw new ArgumentSyntaxException("Expected '" + c + "', got '" + next + "'", input, INVALID_NBT);
@@ -138,7 +145,7 @@ public class ArgumentItemStack extends Argument<ItemStack> {
             index++;
         }
 
-        public Key readKey() {
+        Key readKey() {
             char c;
             int start = index;
             while (hasMore() && (c = peek()) != '{' && c != '[' && c != '=') {
@@ -147,7 +154,7 @@ public class ArgumentItemStack extends Argument<ItemStack> {
             return Key.key(input.substring(start, index));
         }
 
-        public BinaryTag readTag() {
+        BinaryTag readTag() {
             try {
                 StringBuilder remainder = new StringBuilder();
                 final BinaryTag result = MinestomAdventure.tagStringIO().asTag(input.substring(index), remainder);
@@ -155,7 +162,7 @@ public class ArgumentItemStack extends Argument<ItemStack> {
                 this.index = 0;
 
                 return result;
-            } catch (IOException e) {
+            } catch (IOException _) {
                 throw new ArgumentSyntaxException("Invalid NBT", input, INVALID_NBT);
             }
         }

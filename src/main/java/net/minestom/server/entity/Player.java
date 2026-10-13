@@ -22,7 +22,6 @@ import net.kyori.adventure.text.format.NamedTextColor;
 import net.kyori.adventure.text.serializer.plain.PlainTextComponentSerializer;
 import net.kyori.adventure.title.TitlePart;
 import net.minestom.server.MinecraftServer;
-import net.minestom.server.ServerFlag;
 import net.minestom.server.advancements.AdvancementTab;
 import net.minestom.server.advancements.Notification;
 import net.minestom.server.adventure.AdventurePacketConvertor;
@@ -31,7 +30,11 @@ import net.minestom.server.collision.BoundingBox;
 import net.minestom.server.collision.CollisionUtils;
 import net.minestom.server.command.CommandSender;
 import net.minestom.server.component.DataComponents;
-import net.minestom.server.coordinate.*;
+import net.minestom.server.coordinate.ChunkRange;
+import net.minestom.server.coordinate.CoordConversion;
+import net.minestom.server.coordinate.Point;
+import net.minestom.server.coordinate.Pos;
+import net.minestom.server.coordinate.Vec;
 import net.minestom.server.dialog.Dialog;
 import net.minestom.server.entity.metadata.LivingEntityMeta;
 import net.minestom.server.entity.metadata.avatar.PlayerMeta;
@@ -42,7 +45,17 @@ import net.minestom.server.event.inventory.InventoryOpenEvent;
 import net.minestom.server.event.item.ItemDropEvent;
 import net.minestom.server.event.item.PickupExperienceEvent;
 import net.minestom.server.event.item.PlayerFinishItemUseEvent;
-import net.minestom.server.event.player.*;
+import net.minestom.server.event.player.PlayerChunkLoadEvent;
+import net.minestom.server.event.player.PlayerChunkUnloadEvent;
+import net.minestom.server.event.player.PlayerDeathEvent;
+import net.minestom.server.event.player.PlayerDisconnectEvent;
+import net.minestom.server.event.player.PlayerGameModeChangeEvent;
+import net.minestom.server.event.player.PlayerInputEvent;
+import net.minestom.server.event.player.PlayerRespawnEvent;
+import net.minestom.server.event.player.PlayerSkinInitEvent;
+import net.minestom.server.event.player.PlayerSpawnEvent;
+import net.minestom.server.event.player.PlayerStopFlyingWithElytraEvent;
+import net.minestom.server.event.player.PlayerTickEvent;
 import net.minestom.server.instance.Chunk;
 import net.minestom.server.instance.EntityTracker;
 import net.minestom.server.instance.Instance;
@@ -64,13 +77,46 @@ import net.minestom.server.network.PlayerProvider;
 import net.minestom.server.network.packet.client.ClientPacket;
 import net.minestom.server.network.packet.server.SendablePacket;
 import net.minestom.server.network.packet.server.ServerPacket;
-import net.minestom.server.network.packet.server.common.*;
-import net.minestom.server.network.packet.server.play.*;
+import net.minestom.server.network.packet.server.common.ClearDialogPacket;
+import net.minestom.server.network.packet.server.common.KeepAlivePacket;
+import net.minestom.server.network.packet.server.common.PluginMessagePacket;
+import net.minestom.server.network.packet.server.common.ResourcePackPopPacket;
+import net.minestom.server.network.packet.server.common.ResourcePackPushPacket;
+import net.minestom.server.network.packet.server.common.ShowDialogPacket;
+import net.minestom.server.network.packet.server.play.ActionBarPacket;
+import net.minestom.server.network.packet.server.play.CameraPacket;
+import net.minestom.server.network.packet.server.play.ChangeGameStatePacket;
+import net.minestom.server.network.packet.server.play.ChunkBatchFinishedPacket;
+import net.minestom.server.network.packet.server.play.ChunkBatchStartPacket;
+import net.minestom.server.network.packet.server.play.ClearTitlesPacket;
+import net.minestom.server.network.packet.server.play.DeathCombatEventPacket;
+import net.minestom.server.network.packet.server.play.DestroyEntitiesPacket;
+import net.minestom.server.network.packet.server.play.EntityAnimationPacket;
+import net.minestom.server.network.packet.server.play.EntityHeadLookPacket;
+import net.minestom.server.network.packet.server.play.FacePlayerPacket;
+import net.minestom.server.network.packet.server.play.HeldItemChangePacket;
+import net.minestom.server.network.packet.server.play.JoinGamePacket;
+import net.minestom.server.network.packet.server.play.OpenBookPacket;
+import net.minestom.server.network.packet.server.play.PlayerAbilitiesPacket;
+import net.minestom.server.network.packet.server.play.PlayerInfoRemovePacket;
+import net.minestom.server.network.packet.server.play.PlayerInfoUpdatePacket;
+import net.minestom.server.network.packet.server.play.PlayerListHeaderAndFooterPacket;
+import net.minestom.server.network.packet.server.play.PlayerPositionAndLookPacket;
+import net.minestom.server.network.packet.server.play.RespawnPacket;
+import net.minestom.server.network.packet.server.play.ServerDifficultyPacket;
+import net.minestom.server.network.packet.server.play.SetExperiencePacket;
+import net.minestom.server.network.packet.server.play.SetSlotPacket;
+import net.minestom.server.network.packet.server.play.SpawnPositionPacket;
+import net.minestom.server.network.packet.server.play.UnloadChunkPacket;
+import net.minestom.server.network.packet.server.play.UpdateHealthPacket;
+import net.minestom.server.network.packet.server.play.UpdateViewPositionPacket;
+import net.minestom.server.network.packet.server.play.WorldEventPacket;
 import net.minestom.server.network.packet.server.play.data.PlayerSpawnInfo;
 import net.minestom.server.network.packet.server.play.data.WorldPos;
 import net.minestom.server.network.player.ClientSettings;
 import net.minestom.server.network.player.GameProfile;
 import net.minestom.server.network.player.PlayerConnection;
+import net.minestom.server.property.ServerProperties;
 import net.minestom.server.recipe.RecipeManager;
 import net.minestom.server.registry.DynamicRegistry;
 import net.minestom.server.registry.RegistryKey;
@@ -103,8 +149,19 @@ import org.jetbrains.annotations.Nullable;
 
 import java.nio.charset.StandardCharsets;
 import java.time.Duration;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.EnumSet;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Locale;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Set;
+import java.util.UUID;
+import java.util.concurrent.CancellationException;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.locks.ReentrantLock;
@@ -150,14 +207,16 @@ public class Player extends LivingEntity implements CommandSender, HoverEventSou
     private int listOrder;
     private PlayerSkin skin;
 
-    private Instance pendingInstance = null;
+    private @Nullable Instance pendingInstance = null;
+    // Counts the calls to setInstance, so a spawn waiting for chunks knows when a later call replaces it
+    private final AtomicInteger instanceRequests = new AtomicInteger();
     private int dimensionTypeId;
-    private GameMode gameMode;
+    private volatile GameMode gameMode;
     private WorldPos deathLocation;
 
     /**
      * Keeps track of what chunks are sent to the client, this defines the center of the loaded area
-     * in the range of {@link ServerFlag#CHUNK_VIEW_DISTANCE}
+     * in the range of {@link ServerProperties#CHUNK_VIEW_DISTANCE}
      */
     private Vec chunksLoadedByClient = Vec.ZERO;
     private final ReentrantLock chunkQueueLock = new ReentrantLock();
@@ -170,7 +229,7 @@ public class Player extends LivingEntity implements CommandSender, HoverEventSou
 
     final ChunkRange.ChunkConsumer chunkAdder = (chunkX, chunkZ) -> {
         // Load new chunks
-        this.instance.loadOptionalChunk(chunkX, chunkZ).thenAccept(this::sendChunk);
+        var _ = this.instance.loadOptionalChunk(chunkX, chunkZ).thenAccept(this::sendChunk);
     };
     final ChunkRange.ChunkConsumer chunkRemover = (chunkX, chunkZ) -> {
         // Unload old chunks
@@ -181,7 +240,7 @@ public class Player extends LivingEntity implements CommandSender, HoverEventSou
     private final AtomicInteger teleportId = new AtomicInteger();
     private int receivedTeleportId;
 
-    private final MessagePassingQueue<ClientPacket> packets = ConcurrentMessageQueues.mpscArrayQueue(ServerFlag.PLAYER_PACKET_QUEUE_SIZE);
+    private final MessagePassingQueue<ClientPacket> packets = ConcurrentMessageQueues.mpscArrayQueue(ServerProperties.PLAYER_PACKET_QUEUE_SIZE.get());
     private final boolean levelFlat;
     private ClientSettings settings = ClientSettings.DEFAULT;
     private float exp;
@@ -208,7 +267,7 @@ public class Player extends LivingEntity implements CommandSender, HoverEventSou
 
     // Game state (https://minecraft.wiki/w/Minecraft_Wiki:Projects/wiki.vg_merge/Protocol#Game_Event)
     private boolean enableRespawnScreen;
-    private final ChunkUpdateLimitChecker chunkUpdateLimitChecker = new ChunkUpdateLimitChecker(ServerFlag.PLAYER_CHUNK_UPDATE_LIMITER_HISTORY_SIZE);
+    private final ChunkUpdateLimitChecker chunkUpdateLimitChecker = new ChunkUpdateLimitChecker(ServerProperties.PLAYER_CHUNK_UPDATE_LIMITER_HISTORY_SIZE.get());
 
     // Experience orb pickup
     protected Cooldown experiencePickupCooldown = new Cooldown(Duration.of(10, TimeUnit.SERVER_TICK));
@@ -227,7 +286,7 @@ public class Player extends LivingEntity implements CommandSender, HoverEventSou
     private float flyingSpeed = 0.05f;
     private float fieldViewModifier = 0.1f;
 
-    private final Map<PlayerStatistic, Integer> statisticValueMap = new Hashtable<>();
+    private final Map<PlayerStatistic, Integer> statisticValueMap = new ConcurrentHashMap<>();
 
     private final PlayerInputs inputs = new PlayerInputs();
 
@@ -237,8 +296,9 @@ public class Player extends LivingEntity implements CommandSender, HoverEventSou
 
     private final Map<UUID, PendingResourcePack> pendingResourcePacks = new HashMap<>();
     // The future is non-null when a resource pack is in-flight, and completed when all statuses have been received.
-    private CompletableFuture<Void> resourcePackFuture = null;
+    private @Nullable CompletableFuture<Void> resourcePackFuture = null;
 
+    @SuppressWarnings("this-escape") // deliberate self registration during construction
     public Player(PlayerConnection playerConnection, GameProfile gameProfile) {
         super(EntityType.PLAYER, gameProfile.uuid());
         this.gameProfile = gameProfile;
@@ -256,7 +316,7 @@ public class Player extends LivingEntity implements CommandSender, HoverEventSou
         refreshAnswerKeepAlive(true);
 
         this.gameMode = GameMode.SURVIVAL;
-        this.dimensionTypeId = DIMENSION_TYPE_REGISTRY.getId(DimensionType.OVERWORLD); // Default dimension
+        this.dimensionTypeId = dimensionTypeRegistry().getId(DimensionType.OVERWORLD); // Default dimension
         this.levelFlat = true;
 
         // FakePlayer init its connection there
@@ -287,14 +347,14 @@ public class Player extends LivingEntity implements CommandSender, HoverEventSou
         this.pendingInstance = null;
 
         this.removed = false;
-        this.dimensionTypeId = DIMENSION_TYPE_REGISTRY.getId(spawnInstance.getDimensionType());
+        this.dimensionTypeId = dimensionTypeRegistry().getId(spawnInstance.getDimensionType());
 
         final JoinGamePacket joinGamePacket = new JoinGamePacket(
                 getEntityId(), this.hardcore, List.of(), 0,
-                ServerFlag.CHUNK_VIEW_DISTANCE, ServerFlag.CHUNK_VIEW_DISTANCE,
+                ServerProperties.CHUNK_VIEW_DISTANCE.get(), ServerProperties.CHUNK_VIEW_DISTANCE.get(),
                 false, true, false,
-                new PlayerSpawnInfo(dimensionTypeId, spawnInstance.getDimensionName(), 0,
-                        gameMode, null, false, levelFlat,
+                new PlayerSpawnInfo(dimensionTypeId, spawnInstance.getDimensionName(),
+                        spawnInstance.getHashedSeed(), gameMode, null, false, levelFlat,
                         deathLocation, portalCooldown, DEFAULT_SEA_LEVEL),
                 // Always leave online mode & chat secure chat enabled
                 // so the client makes a chat session and shows tablist heads.
@@ -393,14 +453,14 @@ public class Player extends LivingEntity implements CommandSender, HoverEventSou
         super.update(time); // Super update (item pickup/fire management)
 
         // Experience orb pickup
-        if (experiencePickupCooldown.isReady(time)) {
+        if (gameMode != GameMode.SPECTATOR && !isDead() && experiencePickupCooldown.isReady(time)) {
             experiencePickupCooldown.refreshLastUpdate(time);
             this.instance.getEntityTracker().nearbyEntities(position, expandedBoundingBox.width(),
                     EntityTracker.Target.EXPERIENCE_ORBS, experienceOrb -> {
                         if (!expandedBoundingBox.intersectEntity(position, experienceOrb)) return;
                         final PickupExperienceEvent pickupExperienceEvent = new PickupExperienceEvent(this, experienceOrb);
                         EventDispatcher.callCancellable(pickupExperienceEvent, () -> {
-                            short experienceCount = pickupExperienceEvent.getExperienceCount(); // TODO give to player
+//                            short experienceCount = pickupExperienceEvent.getExperienceCount(); // TODO give to player
                             experienceOrb.remove();
                         });
                     });
@@ -488,7 +548,7 @@ public class Player extends LivingEntity implements CommandSender, HoverEventSou
         refreshHealth();
 
         sendPacket(new RespawnPacket(new PlayerSpawnInfo(dimensionTypeId, instance.getDimensionName(),
-                0, gameMode, gameMode, false, levelFlat,
+                instance.getHashedSeed(), gameMode, gameMode, false, levelFlat,
                 deathLocation, portalCooldown, DEFAULT_SEA_LEVEL), (byte) RespawnPacket.COPY_ALL));
         refreshClientStateAfterRespawn();
 
@@ -596,6 +656,9 @@ public class Player extends LivingEntity implements CommandSender, HoverEventSou
      * <p>
      * Be aware that because chunk operations are expensive,
      * it is possible for this method to be non-blocking when retrieving chunks is required.
+     * <p>
+     * A future that waits for chunks completes with a {@link CancellationException} when a later call to this method
+     * replaces it, and the player stays wherever that later call moves it.
      *
      * @param instance      the new player instance
      * @param spawnPosition the new position of the player
@@ -605,6 +668,7 @@ public class Player extends LivingEntity implements CommandSender, HoverEventSou
     public CompletableFuture<Void> setInstance(Instance instance, Pos spawnPosition) {
         final Instance currentInstance = this.instance;
         Check.argCondition(currentInstance == instance, "Instance should be different than the current one");
+        final int request = instanceRequests.incrementAndGet();
         if (SharedInstance.areLinked(currentInstance, instance) && spawnPosition.sameChunk(this.position)) {
             // The player already has the good version of all the chunks.
             // We just need to refresh his entity viewing list and add him to the instance
@@ -621,7 +685,7 @@ public class Player extends LivingEntity implements CommandSender, HoverEventSou
 
         // Ensure that surrounding chunks are loaded
         List<CompletableFuture<Chunk>> futures = new ArrayList<>();
-        ChunkRange.chunksInRange(spawnPosition, this.effectiveViewDistance(), (chunkX, chunkZ) -> {
+        ChunkRange.chunksInRange(spawnPosition, effectiveViewDistance(instance), (chunkX, chunkZ) -> {
             final CompletableFuture<Chunk> future = instance.loadOptionalChunk(chunkX, chunkZ);
             if (!future.isDone()) futures.add(future);
         });
@@ -652,9 +716,13 @@ public class Player extends LivingEntity implements CommandSender, HoverEventSou
             }
         };
 
-        CompletableFuture.allOf(futures.toArray(CompletableFuture[]::new))
+        var _ = CompletableFuture.allOf(futures.toArray(CompletableFuture[]::new))
                 .thenRun(() -> {
                     scheduler.scheduleNextProcess(() -> {
+                        if (instanceRequests.get() != request) {
+                            future.completeExceptionally(new CancellationException("Another setInstance call replaced this one"));
+                            return;
+                        }
                         runnable.accept(instance);
                         future.complete(null);
                     });
@@ -693,13 +761,35 @@ public class Player extends LivingEntity implements CommandSender, HoverEventSou
                              boolean firstSpawn, boolean dimensionChange, boolean updateChunks) {
         if (!firstSpawn && !dimensionChange) {
             // Player instance changed, clear current viewable collections
-            if (updateChunks)
-                ChunkRange.chunksInRange(spawnPosition, this.effectiveViewDistance(), chunkRemover);
+            if (updateChunks) {
+                final int oldViewDistance = effectiveViewDistance();
+                final int newViewDistance = effectiveViewDistance(instance);
+                final int newChunkX = spawnPosition.chunkX();
+                final int newChunkZ = spawnPosition.chunkZ();
+                ChunkRange.chunksInRange(
+                        (int) this.chunksLoadedByClient.x(), (int) this.chunksLoadedByClient.z(), oldViewDistance,
+                        (x, z) -> {
+                            boolean inNewView = Math.abs(x - newChunkX) <= newViewDistance
+                                    && Math.abs(z - newChunkZ) <= newViewDistance;
+                            if (!inNewView) {
+                                // Only send UnloadChunkPacket for chunks no longer in the new view.
+                                // This alleviates a 26.2 client bug where, if it processes an UnloadChunkPacket
+                                // and a ChunkDataPacket for the same chunk in the same frame, the chunk disappears.
+                                // https://bugs.mojang.com/browse/MC/issues/MC-310041
+                                // TODO(26.3): Revert this change; the client bug is fixed in 26.3-snapshot5
+                                sendPacket(new UnloadChunkPacket(x, z));
+                            }
+                            EventDispatcher.call(new PlayerChunkUnloadEvent(this, x, z));
+                        }
+                );
+            }
         }
 
-        if (dimensionChange) sendDimension(instance.getDimensionType(), instance.getDimensionName());
+        if (dimensionChange) {
+            sendDimension(instance.getDimensionType(), instance.getDimensionName(), instance.getHashedSeed());
+        }
 
-        super.setInstance(instance, spawnPosition);
+        var _ = super.setInstance(instance, spawnPosition);
 
         if (updateChunks) {
             final int chunkX = spawnPosition.chunkX();
@@ -740,9 +830,9 @@ public class Player extends LivingEntity implements CommandSender, HoverEventSou
     public void onChunkBatchReceived(float newTargetChunksPerTick) {
 //        logger.debug("chunk batch received player={} chunks/tick={} lead={}", username, newTargetChunksPerTick, chunkBatchLead);
         chunkBatchLead = Math.max(0, chunkBatchLead - 1);
-        newTargetChunksPerTick = newTargetChunksPerTick * ServerFlag.CHUNKS_PER_TICK_MULTIPLIER;
-        targetChunksPerTick = Float.isNaN(newTargetChunksPerTick) ? ServerFlag.MIN_CHUNKS_PER_TICK : MathUtils.clamp(
-                newTargetChunksPerTick, ServerFlag.MIN_CHUNKS_PER_TICK, ServerFlag.MAX_CHUNKS_PER_TICK);
+        newTargetChunksPerTick = newTargetChunksPerTick * ServerProperties.CHUNKS_PER_TICK_MULTIPLIER.get();
+        targetChunksPerTick = Float.isNaN(newTargetChunksPerTick) ? ServerProperties.MIN_CHUNKS_PER_TICK.get() : MathUtils.clamp(
+                newTargetChunksPerTick, ServerProperties.MIN_CHUNKS_PER_TICK.get(), ServerProperties.MAX_CHUNKS_PER_TICK.get());
 
         // Beyond the first batch we can preemptively send up to 10 (matching mojang server)
         if (maxChunkBatchLead == 1) maxChunkBatchLead = 10;
@@ -768,7 +858,7 @@ public class Player extends LivingEntity implements CommandSender, HoverEventSou
         if (chunkQueue.isEmpty() || chunkBatchLead >= maxChunkBatchLead) return;
 
         // Increment the pending chunk count by the target chunks per tick
-        pendingChunkCount = Math.min(pendingChunkCount + targetChunksPerTick, ServerFlag.MAX_CHUNKS_PER_TICK);
+        pendingChunkCount = Math.min(pendingChunkCount + targetChunksPerTick, ServerProperties.MAX_CHUNKS_PER_TICK.get());
         if (pendingChunkCount < 1) return; // Cant send anything
 
         chunkQueueLock.lock();
@@ -997,7 +1087,7 @@ public class Player extends LivingEntity implements CommandSender, HoverEventSou
         sendPacket(new ShowDialogPacket(Dialog.unwrap(dialog)));
     }
 
-    // TODO(1.21.6): Implementation for pending adventure method in 4.24.0.
+    @Override
     public void closeDialog() {
         sendPacket(new ClearDialogPacket());
     }
@@ -1221,7 +1311,7 @@ public class Player extends LivingEntity implements CommandSender, HoverEventSou
         final PlayerInfoUpdatePacket addPlayerPacket = getAddPlayerToList();
 
         final RespawnPacket respawnPacket = new RespawnPacket(new PlayerSpawnInfo(dimensionTypeId,
-                instance.getDimensionName(), 0, gameMode, gameMode,
+                instance.getDimensionName(), instance.getHashedSeed(), gameMode, gameMode,
                 false, levelFlat, deathLocation, portalCooldown,
                 DEFAULT_SEA_LEVEL), (byte) RespawnPacket.COPY_ALL);
 
@@ -1242,7 +1332,7 @@ public class Player extends LivingEntity implements CommandSender, HoverEventSou
         }
 
         getInventory().update();
-        teleport(getPosition());
+        teleport(getPosition()).join();
     }
 
     public void setDeathLocation(Pos position) {
@@ -1447,7 +1537,8 @@ public class Player extends LivingEntity implements CommandSender, HoverEventSou
         sendPacketToViewersAndSelf(getVelocityPacket());
         sendPacketToViewersAndSelf(getMetadataPacket());
         sendPacketToViewersAndSelf(getPropertiesPacket());
-        sendPacketToViewersAndSelf(getEquipmentsPacket());
+        final var equipmentsPacket = getEquipmentsPacket();
+        if (equipmentsPacket != null) sendPacketToViewersAndSelf(equipmentsPacket);
 
         getInventory().update();
     }
@@ -1536,7 +1627,7 @@ public class Player extends LivingEntity implements CommandSender, HoverEventSou
         this.playerConnection.sendPackets(packets);
     }
 
-    public void sendPackets(Collection<SendablePacket> packets) {
+    public void sendPackets(Collection<? extends SendablePacket> packets) {
         this.playerConnection.sendPackets(packets);
     }
 
@@ -1613,7 +1704,7 @@ public class Player extends LivingEntity implements CommandSender, HoverEventSou
      * @return the player current dimension
      */
     public DimensionType getDimensionType() {
-        return DIMENSION_TYPE_REGISTRY.get(dimensionTypeId);
+        return dimensionTypeRegistry().get(dimensionTypeId);
     }
 
     public PlayerInventory getInventory() {
@@ -1637,6 +1728,11 @@ public class Player extends LivingEntity implements CommandSender, HoverEventSou
      */
     public GameMode getGameMode() {
         return gameMode;
+    }
+
+    @Override
+    public boolean canPickupItem() {
+        return super.canPickupItem() && gameMode != GameMode.SPECTATOR;
     }
 
     /**
@@ -1689,15 +1785,22 @@ public class Player extends LivingEntity implements CommandSender, HoverEventSou
      * Mostly unsafe since it requires sending chunks after.
      *
      * @param dimensionType the new player dimension
+     * @param hashedSeed    the {@link Instance#getHashedSeed()} of the dimension being entered
      */
-    protected void sendDimension(RegistryKey<DimensionType> dimensionType, String dimensionName) {
+    protected void sendDimension(RegistryKey<DimensionType> dimensionType, String dimensionName, long hashedSeed) {
         Check.argCondition(instance.getDimensionName().equals(dimensionName),
                 "The dimension needs to be different than the current one!");
-        this.dimensionTypeId = DIMENSION_TYPE_REGISTRY.getId(dimensionType);
+        this.dimensionTypeId = dimensionTypeRegistry().getId(dimensionType);
         sendPacket(new RespawnPacket(new PlayerSpawnInfo(dimensionTypeId, dimensionName,
-                0, gameMode, gameMode, false, levelFlat,
+                hashedSeed, gameMode, gameMode, false, levelFlat,
                 deathLocation, portalCooldown, DEFAULT_SEA_LEVEL), (byte) RespawnPacket.COPY_ALL));
         refreshClientStateAfterRespawn();
+    }
+
+    // Horrible temporary method because of how registries are synchronized, and the player can exist without an instance.
+    @ApiStatus.Internal
+    private static DynamicRegistry<DimensionType> dimensionTypeRegistry() {
+        return MinecraftServer.getDimensionTypeRegistry();
     }
 
     /**
@@ -2001,6 +2104,7 @@ public class Player extends LivingEntity implements CommandSender, HoverEventSou
      *
      * @param invulnerable should the player be invulnerable
      */
+    @Override
     public void setInvulnerable(boolean invulnerable) {
         super.setInvulnerable(invulnerable);
         refreshAbilities();
@@ -2172,7 +2276,16 @@ public class Player extends LivingEntity implements CommandSender, HoverEventSou
     public void interpretPacketQueue() {
         final PacketListenerManager manager = MinecraftServer.getPacketListenerManager();
         // This method is NOT thread-safe
-        this.packets.drain(packet -> manager.processClientPacket(packet, playerConnection), ServerFlag.PLAYER_PACKET_PER_TICK);
+        this.packets.drain(packet -> { // drain cannot throw
+            try {
+                manager.processClientPacket(packet, playerConnection);
+            } catch (Throwable e) {
+                if (playerConnection.getClientState().ordinal() > ServerProperties.SUPPRESS_MISUSED_PACKET_ERROR_LEVEL.get())
+                    MinecraftServer.getExceptionManager().handleException(e);
+                if (ServerProperties.REJECT_MISUSED_PACKET.get())
+                    kick(Component.translatable("multiplayer.disconnect.invalid_packet", "Invalid Packet", NamedTextColor.RED));
+            }
+        }, ServerProperties.PLAYER_PACKET_PER_TICK.get());
     }
 
     /**
@@ -2315,7 +2428,8 @@ public class Player extends LivingEntity implements CommandSender, HoverEventSou
         connection.sendPacket(getSpawnPacket());
         connection.sendPacket(getVelocityPacket());
         connection.sendPacket(getMetadataPacket());
-        connection.sendPacket(getEquipmentsPacket());
+        final var equipmentsPacket = getEquipmentsPacket();
+        if (equipmentsPacket != null) connection.sendPacket(equipmentsPacket);
         if (hasPassenger()) {
             connection.sendPacket(getPassengersPacket());
         }
@@ -2433,8 +2547,11 @@ public class Player extends LivingEntity implements CommandSender, HoverEventSou
      * @return The effective chunk view distance range of the client
      */
     public int effectiveViewDistance() {
-        Instance instance = this.instance;
-        int maxViewDistance = instance != null ? instance.viewDistance() : ServerFlag.CHUNK_VIEW_DISTANCE;
+        return effectiveViewDistance(instance);
+    }
+
+    private int effectiveViewDistance(@Nullable Instance instance) {
+        int maxViewDistance = instance != null ? instance.viewDistance() : ServerProperties.CHUNK_VIEW_DISTANCE.get();
         return Math.min(settings.viewDistance(), maxViewDistance) + 1;
     }
 

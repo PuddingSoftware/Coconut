@@ -36,9 +36,15 @@ import org.jetbrains.annotations.Unmodifiable;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Locale;
+import java.util.Map;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.BiFunction;
 import java.util.function.Function;
@@ -47,7 +53,10 @@ import java.util.function.Supplier;
 /**
  * Handles registry data, used by {@link StaticProtocolObject} implementations and is strictly internal.
  * Use at your own risk.
+ *
+ * @deprecated registry values are exposed directly by their owning protocol objects
  */
+@Deprecated(forRemoval = true)
 public final class RegistryData {
 
     static final Gson GSON = new GsonBuilder()
@@ -61,7 +70,7 @@ public final class RegistryData {
     }
 
     @ApiStatus.Internal
-    public static BlockEntry block(String namespace, Properties main, HashMap<Object, Object> internCache, @Nullable BlockEntry parent, @Nullable Properties parentProperties) {
+    public static BlockEntry block(String namespace, Properties main, Map<Object, Object> internCache, @Nullable BlockEntry parent, @Nullable Properties parentProperties) {
         return new BlockEntry(namespace, main, internCache, parent, parentProperties);
     }
 
@@ -109,6 +118,8 @@ public final class RegistryData {
     }
 
     /**
+     * Loads a registry file from the data resources, falling back to the working directory.
+     *
      * @param path The path without a leading slash, e.g. "blocks.json"
      */
     public static @Nullable InputStream loadRegistryFile(String path) throws IOException {
@@ -130,7 +141,7 @@ public final class RegistryData {
         try (InputStream resourceStream = loadRegistryFile(resourcePath)) {
             if (resourceStream != null) {
                 final Map<String, Object> map = new HashMap<>();
-                try (JsonReader reader = new JsonReader(new InputStreamReader(resourceStream))) {
+                try (JsonReader reader = new JsonReader(new InputStreamReader(resourceStream, StandardCharsets.UTF_8))) {
                     reader.beginObject();
                     while (reader.hasNext()) map.put(reader.nextName(), readObject(reader));
                     reader.endObject();
@@ -190,7 +201,7 @@ public final class RegistryData {
             if (tagString.startsWith("#")) {
                 getTagValues(tag, main, tagString.substring(1));
             } else {
-                tag.add(RegistryKey.unsafeOf(tagString));
+                tag.add(RegistryKey.of(tagString));
             }
         });
     }
@@ -234,6 +245,9 @@ public final class RegistryData {
         private final @Nullable BlockEntityType blockEntityType;
         private final @Nullable Material material;
         private final @Nullable BlockSoundType blockSoundType;
+        private final Shape outlineShape;
+        private final Shape interactionShape;
+        private final Shape visualShape;
         private final Shape shape;
         private final Shape collisionShape;
         private final Shape occlusionShape;
@@ -282,6 +296,18 @@ public final class RegistryData {
                     String shape = properties.getString(string);
                     return CollisionUtils.parseCollisionShape(internCache, shape);
                 }, null);
+                this.outlineShape = fromParent(parent, BlockEntry::outlineShape, main, "shape", (properties, string) -> {
+                    String shape = properties.getString(string);
+                    return CollisionUtils.parseCollisionShape(internCache, shape);
+                }, null);
+                this.interactionShape = fromParent(parent, BlockEntry::interactionShape, main, "interactionShape", (properties, string) -> {
+                    String shape = properties.getString(string);
+                    return CollisionUtils.parseCollisionShape(internCache, shape);
+                }, null);
+                this.visualShape = fromParent(parent, BlockEntry::visualShape, main, "visualShape", (properties, string) -> {
+                    String shape = properties.getString(string);
+                    return CollisionUtils.parseCollisionShape(internCache, shape);
+                }, null);
                 this.collisionShape = fromParent(parent, BlockEntry::collisionShape, main, "collisionShape", (properties, string) -> {
                     String shape = properties.getString(string);
                     return CollisionUtils.parseCollisionShape(internCache, shape);
@@ -307,20 +333,20 @@ public final class RegistryData {
             var signalSource = fromParent(parent, BlockEntry::isSignalSource, main, "signalSource", Properties::getBoolean, false);
             this.packedFlags = (short) (
                     (air ? AIR_OFFSET : 0) |
-                    (liquid ? LIQUID_OFFSET : 0) |
-                    (fluid ? FLUID_OFFSET : 0) |
-                    (solid ? SOLID_OFFSET : 0) |
-                    (occludes ? OCCLUDES_OFFSET : 0) |
-                    (requiresTool ? REQUIRES_TOOL_OFFSET : 0) |
-                    (replaceable ? REPLACEABLE_OFFSET : 0) |
-                    (redstoneConductor ? REDSTONE_CONDUCTOR_OFFSET : 0) |
-                    (signalSource ? SIGNAL_SOURCE_OFFSET : 0)
+                            (liquid ? LIQUID_OFFSET : 0) |
+                            (fluid ? FLUID_OFFSET : 0) |
+                            (solid ? SOLID_OFFSET : 0) |
+                            (occludes ? OCCLUDES_OFFSET : 0) |
+                            (requiresTool ? REQUIRES_TOOL_OFFSET : 0) |
+                            (replaceable ? REPLACEABLE_OFFSET : 0) |
+                            (redstoneConductor ? REDSTONE_CONDUCTOR_OFFSET : 0) |
+                            (signalSource ? SIGNAL_SOURCE_OFFSET : 0)
             );
         }
 
-        private static <R>  R fromParent(@Nullable BlockEntry parent, Function<BlockEntry, R> parentProperty,
-                                @Nullable Properties main, String name, BiFunction<Properties, String, R> function,
-                                @Nullable R defaultValue) {
+        private static <R> R fromParent(@Nullable BlockEntry parent, Function<BlockEntry, R> parentProperty,
+                                        @Nullable Properties main, String name, BiFunction<Properties, String, R> function,
+                                        @Nullable R defaultValue) {
             R value = null;
             if (main != null && main.containsKey(name)) {  // Required to have a nullable properties method
                 value = function.apply(main, name);
@@ -457,6 +483,18 @@ public final class RegistryData {
             return shape;
         }
 
+        public Shape outlineShape() {
+            return outlineShape;
+        }
+
+        public Shape interactionShape() {
+            return interactionShape;
+        }
+
+        public Shape visualShape() {
+            return visualShape;
+        }
+
         public Shape collisionShape() {
             return collisionShape;
         }
@@ -523,7 +561,7 @@ public final class RegistryData {
             final Transcoder<Object> coder = new RegistryTranscoder<>(Transcoder.JAVA, registries);
             DataComponentMap.Builder builder = DataComponentMap.builder();
             for (Map.Entry<String, Object> entry : components) {
-                //noinspection unchecked
+                @SuppressWarnings("unchecked")
                 DataComponent<Object> component = (DataComponent<Object>) DataComponent.fromKey(entry.getKey());
                 Check.notNull(component, "Unknown component {0} in {1}", entry.getKey(), key);
 
@@ -683,7 +721,9 @@ public final class RegistryData {
          *
          * @param attachmentName The attachment to retrieve
          * @return A list of 3 doubles if the attachment is defined for this entity, or null if it is not defined
+         * @deprecated use {@link EntityType#entityAttachments(String)} and select the first attachment
          */
+        @Deprecated(forRemoval = true)
         public @Nullable List<Double> entityAttachment(String attachmentName) {
             var attachments = entityOffsets.get(attachmentName);
             if (attachments == null) {
@@ -699,7 +739,9 @@ public final class RegistryData {
          *
          * @param attachmentName The attachment to retrieve
          * @return A list of a list of 3 doubles if the attachment is defined for this entity, or null if it is not defined
+         * @deprecated use {@link EntityType#entityAttachments(String)}
          */
+        @Deprecated(forRemoval = true)
         public @Nullable List<List<Double>> entityAttachments(String attachmentName) {
             return entityOffsets.get(attachmentName);
         }
@@ -716,7 +758,7 @@ public final class RegistryData {
     public static final class VillagerProfessionEntry implements Entry {
         private final Key key;
         private final int id;
-        private final SoundEvent workSound;
+        private final @Nullable SoundEvent workSound;
 
         public VillagerProfessionEntry(String namespace, Properties main) {
             this.key = Key.key(namespace);
@@ -823,7 +865,7 @@ public final class RegistryData {
         }
 
         @Override
-        public String getString(String name, String defaultValue) {
+        public String getString(String name, @Nullable String defaultValue) {
             var element = element(name);
             return element != null ? (String) element : defaultValue;
         }
@@ -900,8 +942,8 @@ public final class RegistryData {
             return map;
         }
 
+        @SuppressWarnings({"unchecked", "TypeParameterUnusedInFormals"})
         private <T> T element(String name) {
-            //noinspection unchecked
             return (T) map.get(name);
         }
 
@@ -919,7 +961,7 @@ public final class RegistryData {
             return new PropertiesMap(map);
         }
 
-        String getString(String name, String defaultValue);
+        String getString(String name, @Nullable String defaultValue);
 
         String getString(String name);
 
