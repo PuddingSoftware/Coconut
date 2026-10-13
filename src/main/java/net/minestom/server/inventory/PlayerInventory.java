@@ -122,20 +122,22 @@ public non-sealed class PlayerInventory extends AbstractInventory {
     }
 
     @Override
-    protected void UNSAFE_itemInsert(int slot, ItemStack item, ItemStack previous, boolean sendPacket) {
+    protected void UNSAFE_itemInsert(int slot, ItemStack item, ItemStack previous, boolean sendPacket, boolean sendEquipEvent) {
         for (Player player : getViewers()) {
             final EquipmentSlot equipmentSlot = getEquipmentSlot(slot, player.getHeldSlot());
             if (equipmentSlot == null) continue;
 
-            EntityEquipEvent entityEquipEvent = new EntityEquipEvent(player, item, equipmentSlot);
-            EventDispatcher.call(entityEquipEvent);
-            item = entityEquipEvent.getEquippedItem();
+            if (sendEquipEvent) {
+                EntityEquipEvent entityEquipEvent = new EntityEquipEvent(player, item, equipmentSlot);
+                EventDispatcher.call(entityEquipEvent);
+                item = entityEquipEvent.getEquippedItem();
+            }
 
             player.updateEquipmentAttributes(previous, item, equipmentSlot);
             player.syncEquipment(equipmentSlot, item);
         }
 
-        super.UNSAFE_itemInsert(slot, item, previous, sendPacket);
+        super.UNSAFE_itemInsert(slot, item, previous, sendPacket, sendEquipEvent);
     }
 
     @Override

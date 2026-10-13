@@ -113,7 +113,7 @@ public sealed abstract class AbstractInventory implements InventoryClickHandler,
      * @param itemStack the item to set
      */
     public void setItemStack(int slot, ItemStack itemStack) {
-        setItemStack(slot, itemStack, true);
+        setItemStack(slot, itemStack, true, true);
     }
 
     /**
@@ -123,7 +123,7 @@ public sealed abstract class AbstractInventory implements InventoryClickHandler,
      * @param itemStack  the item to set
      * @param sendPacket whether or not to send packets
      */
-    public void setItemStack(int slot, ItemStack itemStack, boolean sendPacket) {
+    public void setItemStack(int slot, ItemStack itemStack, boolean sendPacket, boolean sendEquipEvent) {
         Check.argCondition(!MathUtils.isBetween(slot, 0, getSize() - 1), // Subtract 1 because MathUtils is <= max, instead of strictly less than
                 "Inventory does not have the slot " + slot);
 
@@ -131,12 +131,12 @@ public sealed abstract class AbstractInventory implements InventoryClickHandler,
         synchronized (this) {
             previous = itemStacks[slot];
             if (itemStack.equals(previous)) return; // Avoid sending updates if the item has not changed
-            UNSAFE_itemInsert(slot, itemStack, previous, sendPacket);
+            UNSAFE_itemInsert(slot, itemStack, previous, sendPacket, sendEquipEvent);
         }
         EventDispatcher.call(new InventoryItemChangeEvent(this, slot, previous, itemStack));
     }
 
-    protected void UNSAFE_itemInsert(int slot, ItemStack item, ItemStack previous, boolean sendPacket) {
+    protected void UNSAFE_itemInsert(int slot, ItemStack item, ItemStack previous, boolean sendPacket, boolean sendEquipEvent) {
         itemStacks[slot] = item;
         if (sendPacket) sendSlotRefresh(slot, item);
     }
@@ -221,7 +221,7 @@ public sealed abstract class AbstractInventory implements InventoryClickHandler,
     public synchronized void clear() {
         // Clear the item array
         for (int i = 0; i < size; i++) {
-            setItemStack(i, ItemStack.AIR, false);
+            setItemStack(i, ItemStack.AIR, false, true);
         }
         // Send the cleared inventory to viewers
         update();

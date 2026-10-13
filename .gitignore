@@ -44,6 +44,7 @@ gradle-app.setting
 .windsurf/
 .zed/
 .github/copilot/
+.codex/
 CLAUDE.md
 AGENTS.md
 GEMINI.md
@@ -51,3 +52,4 @@ GEMINI.md
 # JFR
 /.profileconfig.json
 
+package-lock.json
