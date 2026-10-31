@@ -1,44 +1,45 @@
 package net.minestom.server.entity.ai;
 
-import net.minestom.server.entity.EntityMob;
-import net.minestom.server.entity.ai.navigation.PathNavigator;
-import net.minestom.server.entity.ai.navigation.types.OldGroundPathNavigator;
-import net.minestom.server.pathfinding.Pathfinder;
-import org.jetbrains.annotations.ApiStatus;
+import net.minestom.server.Tickable;
+import net.minestom.server.entity.ai.activity.ActivityHandler;
+import net.minestom.server.entity.ai.memory.MemoryHandler;
+import net.minestom.server.entity.ai.sensing.SensorHandler;
+import org.jetbrains.annotations.NotNull;
 
-/**
- * Holds short and long-lived AI state for an {@link EntityMob}.
- */
-public final class Brain {
+// handles the mob AI for an EntityMob
+// maintains a memory which gets updated through sensors
+// activities are set based on memories
+// schedules behavior based on the current activity
+public final class Brain implements Tickable {
 
-    private final EntityMob entityMob;
+    private final ActivityHandler activityHandler;
+    private final SensorHandler sensorHandler;
+    private final MemoryHandler memoryHandler;
 
-    private final PathNavigator pathNavigator;
-
-    public Brain(EntityMob entityMob,
-                 PathNavigator.Type pathNavigatorType) {
-        this.entityMob = entityMob;
-        switch (pathNavigatorType) {
-            default -> this.pathNavigator = new OldGroundPathNavigator(entityMob);
-        }
+    public Brain() {
+        this.activityHandler = new ActivityHandler();
+        this.sensorHandler = new SensorHandler();
+        this.memoryHandler = new MemoryHandler();
     }
 
-    public Brain(EntityMob entityMob,
-                 PathNavigator.Type pathNavigatorType,
-                 Pathfinder pathfinder) {
-        this.entityMob = entityMob;
-        switch (pathNavigatorType) {
-            default -> this.pathNavigator = new OldGroundPathNavigator(entityMob, pathfinder);
-        }
+    @NotNull
+    public ActivityHandler getActivityHandler() {
+        return activityHandler;
     }
 
-    @ApiStatus.Internal
-    public synchronized void tick() {
-        // handle pathfinding
-        pathNavigator.tick();
+    @NotNull
+    public SensorHandler getSensorHandler() {
+        return sensorHandler;
     }
 
-    public PathNavigator pathNavigator() {
-        return pathNavigator;
+    @NotNull
+    public MemoryHandler getMemoryHandler() {
+        return memoryHandler;
+    }
+
+    @Override
+    public void tick(long time) {
+        memoryHandler.tick(time);
+        sensorHandler.tick(time);
     }
 }

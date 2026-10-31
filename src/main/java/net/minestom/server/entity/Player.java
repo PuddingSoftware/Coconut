@@ -176,7 +176,7 @@ import java.util.function.UnaryOperator;
  */
 public class Player extends LivingEntity implements CommandSender, HoverEventSource<ShowEntity>, NamedAndIdentified {
 
-    private static final DynamicRegistry<DimensionType> DIMENSION_TYPE_REGISTRY = MinecraftServer.getDimensionTypeRegistry();
+//    private static final DynamicRegistry<DimensionType> DIMENSION_TYPE_REGISTRY = MinecraftServer.getDimensionTypeRegistry();
 
     private static final Component REMOVE_MESSAGE = Component.text("You have been removed from the server without reason.", NamedTextColor.RED);
     private static final Component MISSING_REQUIRED_RESOURCE_PACK = Component.text("Required resource pack was not loaded.", NamedTextColor.RED);
@@ -565,7 +565,8 @@ public class Player extends LivingEntity implements CommandSender, HoverEventSou
 
         // TODO: client needs nearby entities resent to them if they are unloaded properly when the player is killed (which they arent)
 
-        teleport(respawnPosition).thenRun(this::refreshAfterTeleport);
+        // TODO: should this be a .join()
+        teleport(respawnPosition).thenRun(this::refreshAfterTeleport).join();
     }
 
     /**

@@ -1,0 +1,15 @@
+Use case: style-transfer
+Asset type: production Minecraft Java Edition chest inventory overlay, pixel-art PNG.
+Edit target: the attached vanilla generic_54.png texture. Replace its gray styling with a restrained science-fiction escape-pod control panel while keeping the vanilla slot geometry EXACT. Deliver only the GUI asset, front-facing orthographic, with no scenery, screenshot, mockup, captions, shadows outside the panel, or surrounding margins.
+Output canvas: exactly 1408 x 1776 pixels, corresponding to 176 x 222 logical Minecraft GUI pixels at 8x resolution. This is a tightly fitted portrait rectangle, NOT a square atlas. Crop away the original atlas's unused transparent area. Retain actual transparency only outside the tiny stepped panel corners. Opaque panel and opaque empty slot interiors.
+Style: crisp Minecraft pixel art; blocky stepped bevels, dark spaceship metal, understated cool cyan circuit accents and small amber emergency lights. All decoration is confined to existing margins and header areas; keep every item area clear. No photorealism, no blur, no antialiasing, no perspective, no added buttons. Build visual details on the logical pixel grid.
+Title, exact case: "Escape Pods", readable Minecraft-style pixel lettering in the existing shallow top title band, beginning at logical (8,6). Do not enlarge the header. Small "Inventory" label at logical (8,128), confined to the existing separator band.
+ABSOLUTE GEOMETRY (logical pixels, multiply ALL coordinates and sizes by 8 for output):
+- Panel canvas spans x=0..175, y=0..221. No extra outer margins.
+- Every slot is 18 x 18 including bevel, with an unobstructed 16 x 16 item interior. All columns have item-left x=8,26,44,62,80,98,116,134,152. Slot border begins one pixel before each interior.
+- Upper container: EXACTLY NINE COLUMNS by SIX ROWS = 54 EMPTY SQUARE SLOTS. Item-top y=18,36,54,72,90,108. Thus grid border bounding box x=7,y=17,width=162,height=108.
+- Player inventory: EXACTLY NINE COLUMNS by THREE ROWS = 27 empty slots. Item-top y=139,157,175. Thus grid border x=7,y=138,width=162,height=54.
+- Hotbar: EXACTLY NINE COLUMNS by ONE ROW, item-top y=197. Thus border x=7,y=196,width=162,height=18.
+This corrects the reference atlas's lower section by moving its inventory and hotbar one logical pixel upward for the actual rendered screen.
+Output pixel coordinates for easy checking: slot borders x=56,200,344,488,632,776,920,1064,1208; upper rows y=136,280,424,568,712,856; player rows y=1104,1248,1392; hotbar y=1568. Each outer slot 144x144; interior 128x128 starts 8px inward.
+The 6-row upper grid and 3-row lower grid must not gain or lose rows or columns. Keep all borders aligned, identical slot sizes and pitch, empty interiors, and enough quiet contrast for Minecraft items. No pod illustrations in slots. No extra words. Exact geometric fit is more important than ornament.

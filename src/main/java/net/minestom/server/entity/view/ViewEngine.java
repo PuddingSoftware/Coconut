@@ -4,17 +4,23 @@ import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
 import it.unimi.dsi.fastutil.ints.IntIterator;
 import it.unimi.dsi.fastutil.ints.IntSet;
-import net.minestom.server.ServerFlag;
 import net.minestom.server.coordinate.Point;
 import net.minestom.server.entity.Entity;
 import net.minestom.server.entity.Player;
 import net.minestom.server.instance.EntityTracker;
 import net.minestom.server.instance.Instance;
+import net.minestom.server.property.ServerProperties;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.Unmodifiable;
 
-import java.util.*;
+import java.util.AbstractSet;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Set;
 import java.util.function.Predicate;
 
 public final class ViewEngine {
@@ -130,7 +136,7 @@ public final class ViewEngine {
     /**
      * Assuming that this {@link ViewEngine} represents a {@link Player}, hides all entities from the player
      *
-     * @return
+     * @return true if this is called on a player view, otherwise false
      */
     public boolean hideEntities() {
         if (playerView == null)
@@ -297,7 +303,7 @@ public final class ViewEngine {
         final Int2ObjectMap<Player> nearbyPlayers = new Int2ObjectOpenHashMap<>(previousNearbyPlayersCount);
         instance.getEntityTracker().nearbyEntitiesByChunkRange(
                 point,
-                ServerFlag.ENTITY_VIEW_DISTANCE,
+                ServerProperties.ENTITY_VIEW_DISTANCE.get(),
                 EntityTracker.Target.PLAYERS,
                 player -> nearbyPlayers.putIfAbsent(player.getEntityId(), player)
         );
@@ -317,7 +323,7 @@ public final class ViewEngine {
         final Int2ObjectMap<Entity> nearbyEntities = new Int2ObjectOpenHashMap<>(previousNearbyEntitiesCount);
         instance.getEntityTracker().nearbyEntitiesByChunkRange(
                 point,
-                ServerFlag.ENTITY_VIEW_DISTANCE,
+                ServerProperties.ENTITY_VIEW_DISTANCE.get(),
                 EntityTracker.Target.ENTITIES,
                 entity -> nearbyEntities.putIfAbsent(entity.getEntityId(), entity)
         );

@@ -1,0 +1,20 @@
+{
+  "edition": "Minecraft Java Edition",
+  "canvas": { "width": 176, "height": 222 },
+  "slotInterior": { "width": 16, "height": 16 },
+  "slotBorder": { "width": 18, "height": 18 },
+  "slotPitch": 18,
+  "itemColumns": [8, 26, 44, 62, 80, 98, 116, 134, 152],
+  "chestItemRows": [18, 36, 54, 72, 90, 108],
+  "playerItemRows": [139, 157, 175],
+  "hotbarItemRow": 197,
+  "title": { "text": "Escape Pods", "x": 8, "y": 6 },
+  "inventoryLabel": { "text": "Inventory", "x": 8, "y": 128 },
+  "vanillaAtlas": {
+    "width": 256,
+    "height": 256,
+    "chestSource": { "x": 0, "y": 0, "width": 176, "height": 125 },
+    "inventorySource": { "x": 0, "y": 126, "width": 176, "height": 96 },
+    "inventoryDestination": { "x": 0, "y": 125 }
+  }
+}

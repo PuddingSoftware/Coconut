@@ -8,7 +8,10 @@ import net.minestom.server.coordinate.Vec;
 import net.minestom.server.pathfinding.collections.BinaryMinimumHeap;
 import net.minestom.server.pathfinding.context.MobContext;
 import net.minestom.server.pathfinding.context.PathfindingContext;
-import net.minestom.server.pathfinding.data.*;
+import net.minestom.server.pathfinding.data.Node;
+import net.minestom.server.pathfinding.data.Path;
+import net.minestom.server.pathfinding.data.RegionKey;
+import net.minestom.server.pathfinding.data.SpatialData;
 import net.minestom.server.pathfinding.evaluator.result.NodeEvaluationResult;
 import net.minestom.server.pathfinding.options.PathfinderOptions;
 import org.jetbrains.annotations.NotNull;
@@ -135,6 +138,7 @@ public final class Pathfinder {
     }
 
     @NotNull
+    @SuppressWarnings("MethodCanBeStatic")
     private Path reconstructPath(@NotNull Point start,
                                  @NotNull Point target,
                                  @NotNull Node endNode,
@@ -155,9 +159,9 @@ public final class Pathfinder {
         }
 
         Collections.reverse(debugNodes);
-        for (Node node : debugNodes) {
+//        for (Node node : debugNodes) {
 //            System.out.println(node);
-        }
+//        }
 
         Collections.reverse(points);
         return new Path(bestEffort ? Path.State.BEST_EFFORT : Path.State.FOUND, points, start, target);
@@ -208,6 +212,7 @@ public final class Pathfinder {
         }
     }
 
+    @SuppressWarnings("MethodCanBeStatic")
     private double calculateHeapKey(Node neighbor, double f) {
         double heuristic = neighbor.getH();
         double tieBreaker = TIE_BREAKER_WEIGHT * (heuristic / (Math.abs(f) + 1));
@@ -239,6 +244,7 @@ public final class Pathfinder {
         pathfindingContext.openSetNodes().put(packedPoint, newNode);
     }
 
+    @SuppressWarnings("MethodCanBeStatic")
     private Node extractBestNode(@NotNull PathfindingContext pathfindingContext) {
         final long packedPoint = pathfindingContext.openSet().extractMin();
         final Node node = pathfindingContext.openSetNodes().get(packedPoint);
@@ -312,6 +318,7 @@ public final class Pathfinder {
                 (long _) -> new SpatialData(options));
     }
 
+    @SuppressWarnings("MethodCanBeStatic")
     private double calculateGCost(@NotNull Node parentNode,
                                   @NotNull Node node) {
         // penalize diagonal moves according to the Octile distance of sqrt(2) = 1.41421356237

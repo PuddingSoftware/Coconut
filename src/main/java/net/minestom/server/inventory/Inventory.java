@@ -2,7 +2,6 @@ package net.minestom.server.inventory;
 
 import it.unimi.dsi.fastutil.ints.IntIntPair;
 import net.kyori.adventure.text.Component;
-import net.minestom.server.MinecraftServer;
 import net.minestom.server.entity.Player;
 import net.minestom.server.event.EventDispatcher;
 import net.minestom.server.event.inventory.InventoryDoubleClickEndEvent;

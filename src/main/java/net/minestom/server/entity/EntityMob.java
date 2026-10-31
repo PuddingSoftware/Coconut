@@ -1,72 +1,90 @@
 package net.minestom.server.entity;
 
-import net.minestom.server.coordinate.Point;
 import net.minestom.server.entity.ai.Brain;
-import net.minestom.server.entity.ai.navigation.PathNavigator;
-import net.minestom.server.entity.ai.navigation.data.NavigationDataSnapshot;
-import net.minestom.server.pathfinding.Pathfinder;
-import net.minestom.server.pathfinding.data.Path;
 
 import java.util.UUID;
-import java.util.concurrent.CompletableFuture;
 
 public class EntityMob extends LivingEntity {
 
-    private final Brain brain;
+    protected final Brain brain;
 
-    public EntityMob(EntityType entityType,
-                     PathNavigator.Type pathNavigatorType) {
+    public EntityMob(EntityType entityType) {
         super(entityType);
-        this.brain = new Brain(this, pathNavigatorType);
+
+        this.brain = new Brain();
+        initializeBrain();
     }
 
     public EntityMob(EntityType entityType,
-                     PathNavigator.Type pathNavigatorType,
-                     Pathfinder pathfinder) {
-        super(entityType);
-        this.brain = new Brain(this, pathNavigatorType, pathfinder);
-    }
-
-    public EntityMob(EntityType entityType,
-                     UUID uuid,
-                     PathNavigator.Type pathNavigatorType) {
+                     UUID uuid) {
         super(entityType, uuid);
-        this.brain = new Brain(this, pathNavigatorType);
+
+        this.brain = new Brain();
+        initializeBrain();
     }
 
-    public EntityMob(EntityType entityType,
-                     UUID uuid,
-                     PathNavigator.Type pathNavigatorType,
-                     Pathfinder pathfinder) {
-        super(entityType, uuid);
-        this.brain = new Brain(this, pathNavigatorType, pathfinder);
+    protected void initializeBrain() {
     }
 
     @Override
     public void update(long time) {
-        // mob-related updates such as AI and path navigation
-        brain.tick();
+        // mob-related updates
+        brain.tick(time);
 
         // living entity updates
         super.update(time);
     }
 
-    public CompletableFuture<Path> findPath(Point target,
-                                           int completionRange,
-                                           Runnable completionCallback,
-                                           Runnable bestEffortCompletionCallback) {
-        return brain.pathNavigator().findPath(target, completionRange, completionCallback, bestEffortCompletionCallback);
-    }
-
-    public void setPath(NavigationDataSnapshot dataSnapshot) {
-        brain.pathNavigator().setPath(dataSnapshot);
-    }
-
-    public NavigationDataSnapshot getNavigationDataSnapshot() {
-        return brain.pathNavigator().getNavigationDataSnapshot();
-    }
-
-    public void clearPath() {
-        brain.pathNavigator().clearPath();
-    }
+//    public void disableAI() {
+//        if (ai != null) ai.reset(TerminationReason.REMOVED);
+//        ai = null;
+//        brain.pathNavigator().clearPath();
+//    }
+//
+//    @Override
+//    public boolean damage(Damage damage) {
+//        boolean accepted = super.damage(damage);
+//        if (accepted && ai != null && !isDead()) {
+//            Damage applied = getLastDamageSource();
+//            if (applied != null) ai.onDamage(applied);
+//        }
+//        return accepted;
+//    }
+//
+//    @Override
+//    public void kill() {
+//        if (ai != null) ai.reset(TerminationReason.REMOVED);
+//        super.kill();
+//    }
+//
+//    @Override
+//    protected void remove(boolean permanent) {
+//        if (ai != null) ai.reset(TerminationReason.REMOVED);
+//        super.remove(permanent);
+//    }
+//
+//    public CompletableFuture<Path> findPath(Point target,
+//                                            int completionRange,
+//                                            Runnable completionCallback,
+//                                            Runnable bestEffortCompletionCallback) {
+//        if (ai != null) throw new IllegalStateException("AI goals own navigation while AI is enabled");
+//        return brain.pathNavigator().findPath(target, completionRange, completionCallback, bestEffortCompletionCallback);
+//    }
+//
+//    public void setPath(NavigationDataSnapshot dataSnapshot) {
+//        if (ai != null) throw new IllegalStateException("AI goals own navigation while AI is enabled");
+//        brain.pathNavigator().setPath(dataSnapshot);
+//    }
+//
+//    public NavigationDataSnapshot getNavigationDataSnapshot() {
+//        return brain.pathNavigator().getNavigationDataSnapshot();
+//    }
+//
+//    public void clearPath() {
+//        if (ai != null) {
+//            ai.scheduler().interrupt(Control.MOVE);
+//            ai.navigation().clear();
+//        }
+//        brain.pathNavigator().clearPath();
+//    }
 }

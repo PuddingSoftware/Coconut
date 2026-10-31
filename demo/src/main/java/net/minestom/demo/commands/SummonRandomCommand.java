@@ -10,8 +10,12 @@ import net.minestom.server.command.builder.arguments.minecraft.registry.Argument
 import net.minestom.server.command.builder.arguments.number.ArgumentInteger;
 import net.minestom.server.command.builder.condition.Conditions;
 import net.minestom.server.coordinate.Pos;
-import net.minestom.server.entity.*;
-import net.minestom.server.entity.ai.navigation.PathNavigator;
+import net.minestom.server.entity.Entity;
+import net.minestom.server.entity.EntityMob;
+import net.minestom.server.entity.EntityType;
+import net.minestom.server.entity.LivingEntity;
+import net.minestom.server.entity.Player;
+import net.minestom.server.entity.old.navigation.PathNavigator;
 import net.minestom.server.instance.block.Block;
 
 import java.util.Random;
@@ -37,7 +41,7 @@ public class SummonRandomCommand extends Command {
         amount = ArgumentType.Integer("amount");
 
         addSyntax(this::execute, entity, squareRadius, entityClass, amount);
-        setDefaultExecutor((sender, context) ->
+        setDefaultExecutor((sender, _) ->
                 sender.sendMessage("Usage: /summon <type> <radius> <class> <amount>"));
     }
 

@@ -6,7 +6,11 @@ import net.minestom.server.instance.block.Block;
 import net.minestom.server.utils.block.BlockIterator;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Iterator;
+import java.util.List;
 import java.util.function.Function;
 
 /**
@@ -34,30 +38,31 @@ public record BlockFinder(
      * A hitbox getter that finds a block's collision hitboxes.
      */
     public static final Function<Block, Collection<BoundingBox>> SOLID_BLOCK_HITBOXES =
-            block -> block.registry().collisionShape().boundingBoxes();
+            block -> block.collisionShape().boundingBoxes();
 
-    /**
-     * A hitbox getter that finds a block's client-side boxes (the outlines you see when looking at a block).
+    /*
+      A hitbox getter that finds a block's client-side boxes (the outlines you see when looking at a block).
      */
-    public static final Function<Block, Collection<BoundingBox>> BLOCK_HITBOXES =
-            block -> block.registry().shape().boundingBoxes();
+//    public static final Function<Block, Collection<BoundingBox>> BLOCK_HITBOXES =
+//            block -> block.shape().boundingBoxes();
 
     /**
      * A 1x1x1 block hitbox.
      */
+    @SuppressWarnings("PreferredInterfaceType")
     private static final Collection<BoundingBox> CUBE = List.of(new BoundingBox(Vec.ZERO, Vec.ONE));
 
     /**
      * A hitbox getter that returns a cube if the block has any solid collision.
      */
     public static final Function<Block, Collection<BoundingBox>> SOLID_CUBE_HITBOXES =
-            block -> (block.isSolid() ? CUBE : List.of());
+            block -> (block.solid() ? CUBE : List.of());
 
     /**
      * A hitbox getter that returns a cube if the block is not air.
      */
     public static final Function<Block, Collection<BoundingBox>> CUBE_HITBOXES =
-            block -> (!block.isAir() ? CUBE : List.of());
+            block -> (!block.air() ? CUBE : List.of());
 
     @Override
     public boolean hasNext() {
@@ -90,6 +95,7 @@ public record BlockFinder(
      * Keep in mind that this discards all other hits within the found block.
      * @return the next closest intersection, or null if there are none
      */
+    @SuppressWarnings("PreferredInterfaceType")
     public @Nullable Ray.Intersection<Block> nextClosest() {
         while (blockIterator.hasNext()) {
             Collection<Ray.Intersection<Block>> results = next();

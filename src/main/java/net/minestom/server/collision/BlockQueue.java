@@ -12,6 +12,7 @@ import java.util.function.BiPredicate;
  * <p>
  * Use {@link Ray#blockQueue} to create.
  */
+@SuppressWarnings("serial")
 public final class BlockQueue extends ArrayDeque<Ray.Intersection<Block>> {
 
     /**

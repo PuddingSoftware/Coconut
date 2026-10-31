@@ -63,10 +63,16 @@ module net.minestom.server {
     exports net.minestom.server.dialog;
     exports net.minestom.server.entity;
     exports net.minestom.server.entity.ai;
-    exports net.minestom.server.entity.ai.goals;
+    exports net.minestom.server.entity.ai.activity;
+    exports net.minestom.server.entity.ai.behavior;
+    exports net.minestom.server.entity.ai.behavior.types;
+    exports net.minestom.server.entity.ai.controls;
+    exports net.minestom.server.entity.ai.controls.types;
+    exports net.minestom.server.entity.ai.memory;
     exports net.minestom.server.entity.ai.navigation;
-    exports net.minestom.server.entity.ai.navigation.data;
     exports net.minestom.server.entity.ai.navigation.types;
+    exports net.minestom.server.entity.ai.sensing;
+    exports net.minestom.server.entity.ai.sensing.types;
     exports net.minestom.server.entity.attribute;
     exports net.minestom.server.entity.damage;
     exports net.minestom.server.entity.metadata;
@@ -89,6 +95,10 @@ module net.minestom.server {
     exports net.minestom.server.entity.metadata.villager;
     exports net.minestom.server.entity.metadata.water;
     exports net.minestom.server.entity.metadata.water.fish;
+    exports net.minestom.server.entity.old;
+    exports net.minestom.server.entity.old.navigation;
+    exports net.minestom.server.entity.old.navigation.data;
+    exports net.minestom.server.entity.old.navigation.types;
     exports net.minestom.server.entity.old.pathfinding;
     exports net.minestom.server.entity.old.pathfinding.followers;
     exports net.minestom.server.entity.old.pathfinding.generators;
@@ -217,5 +227,4 @@ module net.minestom.server {
     provides LegacyComponentSerializer.Provider with MinestomLegacyComponentSerializerProvider;
     provides GsonComponentSerializer.Provider with MinestomGsonComponentSerializerProvider;
     provides DataComponentValueConverterRegistry.Provider with MinestomDataComponentValueConverterProvider;
-    exports net.minestom.server.entity.old;
 }

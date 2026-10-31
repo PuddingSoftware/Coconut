@@ -59,7 +59,7 @@ public final class SpatialData {
 
     /**
      * First Line of Defence. This method first checks the bloom filter if it might contain the
-     * provided {@param point}. If true, it performs an expensive containment check on the
+     * provided {@code point}. If true, it performs an expensive containment check on the
      * examined positions.
      */
     public boolean contains(@NotNull Point point,

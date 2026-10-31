@@ -352,6 +352,8 @@ public abstract class Chunk implements Block.Getter, Block.Setter, Biome.Getter,
     }
 
     /**
+     * Checks if the calling thread holds the chunk write-lock
+     *
      * @return whether the calling thread holds the chunk write-lock
      */
     @ApiStatus.Experimental
@@ -360,6 +362,8 @@ public abstract class Chunk implements Block.Getter, Block.Setter, Biome.Getter,
     }
 
     /**
+     * Checks if the calling thread holds the chunk read-lock
+     *
      * @return whether the calling thread holds the chunk read-lock
      */
     @ApiStatus.Experimental

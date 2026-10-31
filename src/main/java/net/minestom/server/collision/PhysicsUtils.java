@@ -12,6 +12,26 @@ public final class PhysicsUtils {
     }
 
     /**
+     * Simulates movement without stepping over obstacles.
+     *
+     * @see #simulateMovement(Pos, Vec, BoundingBox, WorldBorder, Block.Getter, Aerodynamics, boolean, boolean, boolean, boolean, double, PhysicsResult)
+     */
+    public static PhysicsResult simulateMovement(Pos position,
+                                                 Vec velocity,
+                                                 BoundingBox boundingBox,
+                                                 WorldBorder worldBorder,
+                                                 Block.Getter blockGetter,
+                                                 Aerodynamics aerodynamics,
+                                                 boolean noGravity,
+                                                 boolean hasPhysics,
+                                                 boolean onGround,
+                                                 boolean flying,
+                                                 @Nullable PhysicsResult previousPhysicsResult) {
+        return simulateMovement(position, velocity, boundingBox, worldBorder, blockGetter, aerodynamics,
+                noGravity, hasPhysics, onGround, flying, 0, previousPhysicsResult);
+    }
+
+    /**
      * Simulate the entity's movement physics
      * <p>
      * This is done by first attempting to move the entity forward with the
@@ -21,13 +41,14 @@ public final class PhysicsUtils {
      * @param position              the current entity position
      * @param velocity              the current entity velocity in blocks/tick
      * @param boundingBox           the current entity bounding box
-     * @param worldBorder           the world border colliding with the entity, applied only when {@code entityHasPhysics} is true
+     * @param worldBorder           the world border colliding with the entity, applied only when {@code hasPhysics} is true
      * @param blockGetter           the block getter to test block collisions against
      * @param aerodynamics          the current entity aerodynamics
      * @param noGravity             whether the entity has gravity
      * @param hasPhysics            whether the entity has physics
      * @param onGround              whether the entity is on the ground
      * @param flying                whether the entity is flying
+     * @param stepHeight            the maximum height to step over obstacles, or zero to disable stepping
      * @param previousPhysicsResult the physics result from the previous simulation or null
      * @return a {@link PhysicsResult} containing the resulting physics state of this simulation
      */
@@ -45,37 +66,27 @@ public final class PhysicsUtils {
                                                  @Nullable PhysicsResult previousPhysicsResult) {
         PhysicsResult physicsResult;
         if (hasPhysics) {
-            physicsResult = CollisionUtils.handlePhysics(blockGetter, boundingBox, position, velocity, previousPhysicsResult, false);
+            physicsResult = CollisionUtils.handlePhysics(blockGetter, worldBorder, boundingBox,
+                    position, velocity, previousPhysicsResult, false);
 
-            // check to see if we need to check for a step
-            if (onGround && stepHeight > 0.0D && (physicsResult.collisionX() || physicsResult.collisionZ())) {
-                final PhysicsResult stepUpPhysicsResult = tryStepUp(position, velocity, boundingBox, blockGetter, stepHeight);
-
-                if (stepUpPhysicsResult != null) {
-                    double normalDistance = position.distanceSquared(physicsResult.newPosition());
-                    double stepUpDistance = position.distanceSquared(stepUpPhysicsResult.newPosition());
-
-                    if (stepUpDistance > normalDistance + Vec.EPSILON) {
-                        physicsResult = stepUpPhysicsResult;
-                    }
-                }
+            // Border walls have no collision shape and cannot be stepped over.
+            if (onGround && stepHeight > 0 && (physicsResult.collisionX() || physicsResult.collisionZ())
+                    && (physicsResult.collisionShapes()[0] != null || physicsResult.collisionShapes()[2] != null)) {
+                final PhysicsResult stepUpResult = tryStepUp(position, velocity, boundingBox, worldBorder,
+                        blockGetter, stepHeight, physicsResult);
+                if (stepUpResult != null) physicsResult = stepUpResult;
             }
         } else {
             physicsResult = CollisionUtils.blocklessCollision(position, velocity);
         }
 
         final Pos newPosition = physicsResult.newPosition();
-        Vec newVelocity = physicsResult.newVelocity();
-
-        final Pos positionWithinBorder = CollisionUtils.applyWorldBorder(worldBorder, position, newPosition);
-        newVelocity = updateVelocity(positionWithinBorder, newVelocity, blockGetter, aerodynamics, !positionWithinBorder.samePoint(position), flying, onGround, noGravity);
-
-        final boolean cached = physicsResult.cached()
-                && newVelocity.samePoint(physicsResult.newVelocity())
-                && positionWithinBorder.samePoint(newPosition);
+        final Vec newVelocity = updateVelocity(newPosition, physicsResult.newVelocity(), blockGetter, aerodynamics,
+                !newPosition.samePoint(position), flying, onGround, noGravity);
+        if (newVelocity.samePoint(physicsResult.newVelocity())) return physicsResult;
 
         return new PhysicsResult(
-                positionWithinBorder,
+                newPosition,
                 newVelocity,
                 physicsResult.isOnGround(),
                 physicsResult.collisionX(),
@@ -86,8 +97,7 @@ public final class PhysicsUtils {
                 physicsResult.collisionShapes(),
                 physicsResult.collisionShapePositions(),
                 physicsResult.hasCollision(),
-                physicsResult.res(),
-                cached
+                physicsResult.collisionFraction()
         );
     }
 
@@ -95,13 +105,11 @@ public final class PhysicsUtils {
     private static PhysicsResult tryStepUp(Pos position,
                                            Vec velocity,
                                            BoundingBox boundingBox,
+                                           WorldBorder worldBorder,
                                            Block.Getter blockGetter,
-                                           double stepHeight) {
-        // make sure there is velocity
-        if (velocity.x() == 0.0D && velocity.z() == 0.0D)
-            return null;
-
-        // stepping is 3 steps: upwards -> horizontal -> downwards
+                                           double stepHeight,
+                                           PhysicsResult normalResult) {
+        // Keep the three sweeps separate: a diagonal sweep can hit the step before clearing its top.
         final Vec upwardsVelocity = new Vec(0.0D, stepHeight + Vec.EPSILON, 0.0D);
         final PhysicsResult upwardsPhysicsResult = CollisionUtils.handlePhysics(
                 blockGetter,
@@ -112,7 +120,7 @@ public final class PhysicsUtils {
                 false
         );
 
-        // check if the up movement results in a step or is blocked
+        // A low ceiling may still leave enough room for a smaller step.
         final double yDifference = upwardsPhysicsResult.newPosition().y() - position.y();
         if (yDifference <= Vec.EPSILON)
             return null;
@@ -121,6 +129,7 @@ public final class PhysicsUtils {
         final Vec horizontalVelocity = new Vec(velocity.x(), 0.0D, velocity.z());
         final PhysicsResult horizontalPhysicsResult = CollisionUtils.handlePhysics(
                 blockGetter,
+                worldBorder,
                 boundingBox,
                 elevatedPosition,
                 horizontalVelocity,
@@ -129,6 +138,11 @@ public final class PhysicsUtils {
         );
 
         final Pos horizontalPosition = horizontalPhysicsResult.newPosition();
+        // Height alone must not make a blocked step look better. Reject it before the landing sweep.
+        if (horizontalDistanceSquared(position, horizontalPosition)
+                <= horizontalDistanceSquared(position, normalResult.newPosition()) + Vec.EPSILON)
+            return null;
+
         final Vec downwardsVelocity = new Vec(0.0D, -yDifference, 0.0D);
         final PhysicsResult downwardsPhysicsResult = CollisionUtils.handlePhysics(
                 blockGetter,
@@ -145,26 +159,44 @@ public final class PhysicsUtils {
             return null;
 
         final Vec finalVelocity = new Vec(
-                horizontalPhysicsResult.collisionX() ? 0.0D : velocity.x(),
-                velocity.y(),
-                horizontalPhysicsResult.collisionZ() ? 0.0D : velocity.z()
+                horizontalPhysicsResult.newVelocity().x(),
+                downwardsPhysicsResult.collisionY() ? 0 : velocity.y(),
+                horizontalPhysicsResult.newVelocity().z()
         );
+
+        final boolean horizontalCollision = horizontalPhysicsResult.hasCollision();
+        final var collisionPoints = horizontalCollision
+                ? horizontalPhysicsResult.collisionPoints().clone() : downwardsPhysicsResult.collisionPoints();
+        final var collisionShapes = horizontalCollision
+                ? horizontalPhysicsResult.collisionShapes().clone() : downwardsPhysicsResult.collisionShapes();
+        final var collisionShapePositions = horizontalCollision
+                ? horizontalPhysicsResult.collisionShapePositions().clone() : downwardsPhysicsResult.collisionShapePositions();
+        if (horizontalCollision) {
+            collisionPoints[1] = downwardsPhysicsResult.collisionPoints()[1];
+            collisionShapes[1] = downwardsPhysicsResult.collisionShapes()[1];
+            collisionShapePositions[1] = downwardsPhysicsResult.collisionShapePositions()[1];
+        }
 
         return new PhysicsResult(
                 finalPosition,
                 finalVelocity,
                 downwardsPhysicsResult.collisionY(),
                 horizontalPhysicsResult.collisionX(),
-                false,
+                downwardsPhysicsResult.collisionY(),
                 horizontalPhysicsResult.collisionZ(),
                 velocity,
-                downwardsPhysicsResult.collisionPoints(),
-                downwardsPhysicsResult.collisionShapes(),
-                downwardsPhysicsResult.collisionShapePositions(),
-                true,
-                downwardsPhysicsResult.res(),
-                false
+                collisionPoints,
+                collisionShapes,
+                collisionShapePositions,
+                horizontalPhysicsResult.hasCollision() || downwardsPhysicsResult.hasCollision(),
+                downwardsPhysicsResult.collisionFraction()
         );
+    }
+
+    private static double horizontalDistanceSquared(Pos start, Pos end) {
+        final double x = end.x() - start.x();
+        final double z = end.z() - start.z();
+        return x * x + z * z;
     }
 
     /**
@@ -199,7 +231,7 @@ public final class PhysicsUtils {
         }
 
         double drag = onGround
-                ? blockGetter.getBlock(position.sub(0, 0.5000001, 0)).registry().friction() * aerodynamics.horizontalAirResistance() : aerodynamics.horizontalAirResistance();
+                ? blockGetter.getBlock(position.sub(0, 0.5000001, 0)).friction() * aerodynamics.horizontalAirResistance() : aerodynamics.horizontalAirResistance();
         double gravity = flying ? 0 : aerodynamics.gravity();
         double gravityDrag = flying ? 0.6 : aerodynamics.verticalAirResistance();
 

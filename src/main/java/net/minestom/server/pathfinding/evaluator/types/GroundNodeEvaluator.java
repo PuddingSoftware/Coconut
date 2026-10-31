@@ -1,6 +1,10 @@
 package net.minestom.server.pathfinding.evaluator.types;
 
-import net.minestom.server.collision.*;
+import net.minestom.server.collision.BoundingBox;
+import net.minestom.server.collision.CollisionUtils;
+import net.minestom.server.collision.PhysicsResult;
+import net.minestom.server.collision.Shape;
+import net.minestom.server.collision.SweepResult;
 import net.minestom.server.coordinate.BlockVec;
 import net.minestom.server.coordinate.Point;
 import net.minestom.server.coordinate.Pos;
@@ -61,7 +65,7 @@ public final class GroundNodeEvaluator implements NodeEvaluator {
             oldBlock = mobContext.instance().getBlock(oldPoint, Block.Getter.Condition.TYPE);
             newBlock = mobContext.instance().getBlock(newPoint, Block.Getter.Condition.TYPE);
             belowNewBlock = mobContext.instance().getBlock(belowNewPoint, Block.Getter.Condition.TYPE);
-        } catch (NullPointerException ignored) {
+        } catch (NullPointerException _) {
             if (options.isAutoLoadChunks()) {
                 // load the chunks and get the blocks again
                 mobContext.instance().loadChunk(oldPoint).join();
@@ -76,9 +80,9 @@ public final class GroundNodeEvaluator implements NodeEvaluator {
             }
         }
 
-        final Shape oldBlockShape = oldBlock.registry().collisionShape();
-        final Shape newBlockShape = newBlock.registry().collisionShape();
-        final Shape belowNewBlockShape = belowNewBlock.registry().collisionShape();
+        final Shape oldBlockShape = oldBlock.collisionShape();
+        final Shape newBlockShape = newBlock.collisionShape();
+        final Shape belowNewBlockShape = belowNewBlock.collisionShape();
 
         final boolean largeBoundingBox = mobContext.boundingBox().width() > 1.0D || mobContext.boundingBox().depth() > 1.0D;
 
@@ -103,6 +107,7 @@ public final class GroundNodeEvaluator implements NodeEvaluator {
 
     // checks to make sure that a move is valid
     @NotNull
+    @SuppressWarnings("MethodCanBeStatic")
     private NodeEvaluationResult checkMove(@NotNull EvaluationContext evaluationContext) {
         // check if they can move to this position without any obstructions in the way
         if (hasBlockCollision(evaluationContext, evaluationContext.oldPoint(), evaluationContext.newPoint())) {
@@ -116,6 +121,7 @@ public final class GroundNodeEvaluator implements NodeEvaluator {
     }
 
     @NotNull
+    @SuppressWarnings("MethodCanBeStatic")
     private NodeEvaluationResult checkFallMoveForSmallBoundingBox(@NotNull EvaluationContext evaluationContext) {
         // check if the blocks up to the max safe fall distance are air
         // this is our fast exit before needing expensive physics calls
@@ -127,8 +133,8 @@ public final class GroundNodeEvaluator implements NodeEvaluator {
         boolean requiresPreciseCheck = false;
         for (int y = newPointY; y >= evaluationContext.belowNewPoint().blockY() - evaluationContext.mobContext().safeFallDistance(); y--) {
             final Block block = evaluationContext.instance().getBlock(newPointX, y, newPointZ, Block.Getter.Condition.TYPE);
-            if (block != null && !block.isAir()) {
-                final Shape blockShape = block.registry().collisionShape();
+            if (block != null && !block.air()) {
+                final Shape blockShape = block.collisionShape();
                 if (blockShape.relativeStart().x() == 0.0D && blockShape.relativeStart().z() == 0.0D
                         && blockShape.relativeEnd().x() == 1.0D && blockShape.relativeEnd().z() == 1.0D) {
                     // we know that this shape is consistent with a block that an entity could not fall through (it takes up the entire 1x1 space)
@@ -197,6 +203,7 @@ public final class GroundNodeEvaluator implements NodeEvaluator {
     }
 
     @NotNull
+    @SuppressWarnings("MethodCanBeStatic")
     private NodeEvaluationResult checkUpwardsMove(@NotNull EvaluationContext evaluationContext) {
         final Shape oldBlockShape = evaluationContext.oldBlockShape();
         final Shape newBlockShape = evaluationContext.newBlockShape();
@@ -206,7 +213,6 @@ public final class GroundNodeEvaluator implements NodeEvaluator {
 
         final Shape aboveNewBlockShape = evaluationContext.instance()
                 .getBlock(evaluationContext.newPoint().add(0.0D, 1.0D, 0.0D), Block.Getter.Condition.TYPE)
-                .registry()
                 .collisionShape();
 
         // Possible heights to try standing/moving at:
@@ -276,6 +282,7 @@ public final class GroundNodeEvaluator implements NodeEvaluator {
         return new NodeEvaluationResult(NodeEvaluationResult.Status.INVALID_MOVE);
     }
 
+    @SuppressWarnings("MethodCanBeStatic")
     private boolean canFit(@NotNull MobContext mobContext,
                            @NotNull Point point) {
         return CollisionUtils.canFit(
@@ -285,6 +292,7 @@ public final class GroundNodeEvaluator implements NodeEvaluator {
         );
     }
 
+    @SuppressWarnings("MethodCanBeStatic")
     private boolean hasBlockCollision(@NotNull EvaluationContext evaluationContext,
                                       @NotNull Point currentPoint,
                                       @NotNull Point newPoint) {
@@ -333,7 +341,7 @@ public final class GroundNodeEvaluator implements NodeEvaluator {
                     if (block == null || block.id() == Block.AIR.id()) continue;
 
                     // check for the possibility of a collision
-                    final Shape blockCollisionShape = block.registry().collisionShape();
+                    final Shape blockCollisionShape = block.collisionShape();
                     if (blockCollisionShape.relativeStart() == Vec.ZERO
                             && blockCollisionShape.relativeEnd() == Vec.ZERO)
                         continue;

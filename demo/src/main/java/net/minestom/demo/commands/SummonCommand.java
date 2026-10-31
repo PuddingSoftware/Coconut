@@ -9,8 +9,12 @@ import net.minestom.server.command.builder.arguments.ArgumentType;
 import net.minestom.server.command.builder.arguments.minecraft.registry.ArgumentEntityType;
 import net.minestom.server.command.builder.condition.Conditions;
 import net.minestom.server.coordinate.Vec;
-import net.minestom.server.entity.*;
-import net.minestom.server.entity.ai.navigation.PathNavigator;
+import net.minestom.server.entity.Entity;
+import net.minestom.server.entity.EntityMob;
+import net.minestom.server.entity.EntityType;
+import net.minestom.server.entity.LivingEntity;
+import net.minestom.server.entity.Player;
+import net.minestom.server.entity.old.navigation.PathNavigator;
 import net.minestom.server.utils.location.RelativeVec;
 
 public class SummonCommand extends Command {

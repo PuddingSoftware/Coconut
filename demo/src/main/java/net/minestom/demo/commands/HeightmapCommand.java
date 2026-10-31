@@ -16,7 +16,7 @@ public class HeightmapCommand extends Command {
 
         setCondition(Conditions::playerOnly);
 
-        setDefaultExecutor((sender, context) -> {
+        setDefaultExecutor((sender, _) -> {
             final Player player = (Player) sender;
             final Pos playerPos = player.getPosition();
             final Instance instance = player.getInstance();
@@ -32,8 +32,8 @@ public class HeightmapCommand extends Command {
                 return;
             }
 
-            final Heightmap motionBlockingHeightmap = chunk.motionBlockingHeightmap();
-            final Heightmap worldSurfaceHeightmap = chunk.worldSurfaceHeightmap();
+//            final Heightmap motionBlockingHeightmap = chunk.motionBlockingHeightmap();
+//            final Heightmap worldSurfaceHeightmap = chunk.worldSurfaceHeightmap();
             final Heightmap motionBlockingNoLeavesHeightmap = chunk.motionBlockingNoLeavesHeightmap();
 
 //            final int motionBlockingY = motionBlockingHeightmap.getHeight(sectionX, sectionZ);

@@ -33,7 +33,7 @@ public final class CollisionUtils {
             Block block;
             try {
                 block = instance.getBlock(blockX, blockY, blockZ, Block.Getter.Condition.TYPE);
-            } catch (NullPointerException ignored) {
+            } catch (NullPointerException _) {
                 block = null;
             }
 
@@ -46,7 +46,7 @@ public final class CollisionUtils {
             if (block.id() == Block.SCAFFOLDING.id())
                 continue;
 
-            boolean hit = block.registry().collisionShape().intersectBox(
+            boolean hit = block.collisionShape().intersectBox(
                     point.sub(blockX, blockY, blockZ),
                     boundingBox
             );

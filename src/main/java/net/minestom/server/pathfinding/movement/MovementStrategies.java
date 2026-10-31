@@ -13,6 +13,7 @@ public final class MovementStrategies {
     /**
      * Left, right, forward, and backwards movement.
      */
+    @SuppressWarnings("PreferredInterfaceType")
     public static final Collection<Vec> BASIC = Arrays.asList(
             new Vec(-1, 0, 0),
             new Vec(0, 0, -1),
@@ -23,6 +24,7 @@ public final class MovementStrategies {
     /**
      * Left, right, forward, backwards, and diagonal movement.
      */
+    @SuppressWarnings("PreferredInterfaceType")
     public static final Collection<Vec> BASIC_AND_DIAGONAL = Arrays.asList(
             new Vec(-1, 0, -1),
             new Vec(-1, 0, 0),

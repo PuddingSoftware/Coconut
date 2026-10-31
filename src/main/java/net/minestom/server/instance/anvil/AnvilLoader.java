@@ -85,10 +85,9 @@ public class AnvilLoader implements ChunkLoader {
     }
 
     /**
-     * @deprecated This creates the AnvilLoader for worlds created before 26.1. Use {@link #AnvilLoader(Path, Key)} instead.
+     * This creates the AnvilLoader for worlds created before 26.1.
      * @param path The path to the world
      */
-    @Deprecated(forRemoval = true)
     public AnvilLoader(Path path) {
         this.path = path;
         this.levelPath = path.resolve("level.dat");
@@ -96,10 +95,9 @@ public class AnvilLoader implements ChunkLoader {
     }
 
     /**
-     * @deprecated This creates the AnvilLoader for worlds created before 26.1. Use {@link #AnvilLoader(Path, Key)} instead.
+     * This creates the AnvilLoader for worlds created before 26.1.
      * @param path The path to the world
      */
-    @Deprecated(forRemoval = true)
     public AnvilLoader(String path) {
         this(Path.of(path));
     }

@@ -16,7 +16,7 @@ public class InventoryCommand extends Command {
 
         setCondition(Conditions::playerOnly);
 
-        setDefaultExecutor((sender, context) -> {
+        setDefaultExecutor((sender, _) -> {
             sender.sendMessage(Component.text("Usage: /inventory <type>", NamedTextColor.RED));
         });
 

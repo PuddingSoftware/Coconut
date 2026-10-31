@@ -13,7 +13,7 @@ public class AroundCommand extends Command {
         super("around");
         setCondition(Conditions::playerOnly);
 
-        setDefaultExecutor((sender, context) -> {
+        setDefaultExecutor((sender, _) -> {
             final Player player = (Player) sender;
             player.sendMessage("Has Clearance: " + hasClearance(player));
             //final NodeGenerator nodeGenerator = new WalkNodeGenerator();
@@ -21,6 +21,7 @@ public class AroundCommand extends Command {
         });
     }
 
+    @SuppressWarnings("MethodCanBeStatic")
     private boolean hasClearance(Player player) {
         final BoundingBox.PointIterator blockIterator = player.getBoundingBox().getBlocks(player.getPosition());
         while (blockIterator.hasNext()) {
@@ -30,7 +31,7 @@ public class AroundCommand extends Command {
             if (block == null) continue;
             if (block.id() == Block.SCAFFOLDING.id()) continue;
 
-            final boolean hit = block.registry().collisionShape().intersectBox(player.getPosition().sub(blockPoint.blockX(), blockPoint.blockY(), blockPoint.blockZ()), player.getBoundingBox());
+            final boolean hit = block.collisionShape().intersectBox(player.getPosition().sub(blockPoint.blockX(), blockPoint.blockY(), blockPoint.blockZ()), player.getBoundingBox());
             if (hit) return false;
         }
 

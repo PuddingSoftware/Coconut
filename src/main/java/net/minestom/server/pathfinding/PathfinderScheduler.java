@@ -16,7 +16,7 @@ final class PathfinderScheduler {
                 if (!PATHING_EXECUTOR_SERVICE.awaitTermination(5, TimeUnit.SECONDS)) {
                     PATHING_EXECUTOR_SERVICE.shutdownNow();
                 }
-            } catch (InterruptedException exception) {
+            } catch (InterruptedException _) {
                 PATHING_EXECUTOR_SERVICE.shutdownNow();
                 Thread.currentThread().interrupt();
             }

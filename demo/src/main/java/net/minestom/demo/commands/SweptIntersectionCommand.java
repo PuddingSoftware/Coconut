@@ -25,7 +25,7 @@ public class SweptIntersectionCommand extends Command {
 
         setCondition(Conditions::playerOnly);
 
-        setDefaultExecutor((sender, command) -> {
+        setDefaultExecutor((sender, _) -> {
             final Player player = (Player) sender;
 
             final Instance instance = player.getInstance();
@@ -71,7 +71,7 @@ public class SweptIntersectionCommand extends Command {
                         for (int z = minBlockZ; z <= maxBlockZ; z++) {
                             final BlockVec blockPosition = new BlockVec(x, y, z);
                             final Block block = instance.getBlock(blockPosition, Block.Getter.Condition.TYPE);
-                            final Shape blockShape = block.registry().collisionShape();
+                            final Shape blockShape = block.collisionShape();
 
                             // no block here = no possibility of a collision
                             if (blockShape.relativeStart() == Vec.ZERO && blockShape.relativeEnd() == Vec.ZERO)
@@ -101,6 +101,7 @@ public class SweptIntersectionCommand extends Command {
         });
     }
 
+    @SuppressWarnings("MethodCanBeStatic")
     private void spawnParticle(Player player,
                                Point point,
                                boolean hit) {

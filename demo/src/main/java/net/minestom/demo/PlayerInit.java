@@ -1,8 +1,5 @@
 package net.minestom.demo;
 
-import net.kyori.adventure.key.Key;
-import net.kyori.adventure.nbt.CompoundBinaryTag;
-import net.kyori.adventure.nbt.StringBinaryTag;
 import net.kyori.adventure.sound.Sound;
 import net.kyori.adventure.text.Component;
 import net.minestom.server.MinecraftServer;
@@ -11,21 +8,9 @@ import net.minestom.server.adventure.audience.Audiences;
 import net.minestom.server.component.DataComponents;
 import net.minestom.server.coordinate.Pos;
 import net.minestom.server.coordinate.Vec;
-import net.minestom.server.dialog.*;
-import net.minestom.server.entity.*;
-import net.minestom.server.entity.attribute.Attribute;
-import net.minestom.server.dialog.Dialog;
-import net.minestom.server.dialog.DialogAction;
-import net.minestom.server.dialog.DialogActionButton;
-import net.minestom.server.dialog.DialogAfterAction;
-import net.minestom.server.dialog.DialogBody;
-import net.minestom.server.dialog.DialogInput;
-import net.minestom.server.dialog.DialogMetadata;
 import net.minestom.server.entity.Entity;
-import net.minestom.server.entity.EntityType;
 import net.minestom.server.entity.GameMode;
 import net.minestom.server.entity.ItemEntity;
-import net.minestom.server.entity.LivingEntity;
 import net.minestom.server.entity.Player;
 import net.minestom.server.entity.PlayerHand;
 import net.minestom.server.entity.damage.Damage;
@@ -33,10 +18,6 @@ import net.minestom.server.event.Event;
 import net.minestom.server.event.EventNode;
 import net.minestom.server.event.entity.EntityAttackEvent;
 import net.minestom.server.event.inventory.CreativeInventoryActionEvent;
-import net.minestom.server.event.inventory.InventoryClickEvent;
-import net.minestom.server.event.inventory.InventoryItemChangeEvent;
-import net.minestom.server.event.item.*;
-import net.minestom.server.event.player.*;
 import net.minestom.server.event.item.ItemDropEvent;
 import net.minestom.server.event.item.PickupItemEvent;
 import net.minestom.server.event.item.PlayerBeginItemUseEvent;
@@ -46,13 +27,10 @@ import net.minestom.server.event.player.AsyncPlayerConfigurationEvent;
 import net.minestom.server.event.player.PlayerBlockBreakEvent;
 import net.minestom.server.event.player.PlayerBlockInteractEvent;
 import net.minestom.server.event.player.PlayerBlockPlaceEvent;
-import net.minestom.server.event.player.PlayerChatEvent;
 import net.minestom.server.event.player.PlayerCustomClickEvent;
-import net.minestom.server.event.player.PlayerDeathEvent;
 import net.minestom.server.event.player.PlayerDisconnectEvent;
 import net.minestom.server.event.player.PlayerEditSignEvent;
 import net.minestom.server.event.player.PlayerGameModeRequestEvent;
-import net.minestom.server.event.player.PlayerInputEvent;
 import net.minestom.server.event.player.PlayerLeaveBedEvent;
 import net.minestom.server.event.player.PlayerPacketEvent;
 import net.minestom.server.event.player.PlayerPacketOutEvent;
@@ -67,38 +45,19 @@ import net.minestom.server.instance.anvil.AnvilLoader;
 import net.minestom.server.instance.block.Block;
 import net.minestom.server.instance.block.BlockFace;
 import net.minestom.server.instance.block.BlockHandler;
-import net.minestom.server.instance.block.predicate.BlockPredicate;
-import net.minestom.server.instance.block.predicate.ComponentPredicateSet;
-import net.minestom.server.instance.block.predicate.DataComponentPredicate;
-import net.minestom.server.instance.block.predicate.DataComponentPredicates;
-import net.minestom.server.instance.block.predicate.NbtPredicate;
-import net.minestom.server.instance.block.predicate.PropertiesPredicate;
 import net.minestom.server.inventory.Inventory;
 import net.minestom.server.inventory.InventoryType;
 import net.minestom.server.item.ItemStack;
 import net.minestom.server.item.Material;
-import net.minestom.server.item.component.Bee;
-import net.minestom.server.item.component.BlockPredicates;
-import net.minestom.server.item.component.Consumable;
-import net.minestom.server.item.component.TypedCustomData;
 import net.minestom.server.monitoring.TickMonitor;
-import net.minestom.server.network.packet.server.common.CustomReportDetailsPacket;
-import net.minestom.server.network.packet.server.common.ServerLinksPacket;
-import net.minestom.server.network.packet.server.play.TrackedWaypointPacket;
-import net.minestom.server.network.player.ResolvableProfile;
-import net.minestom.server.registry.RegistryTag;
 import net.minestom.server.sound.SoundEvent;
 import net.minestom.server.utils.MathUtils;
 import net.minestom.server.utils.time.TimeUnit;
 
 import java.io.IOException;
 import java.time.Duration;
-import java.util.*;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
-import java.util.Map;
-import java.util.Random;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.concurrent.atomic.AtomicReference;
 
@@ -181,10 +140,10 @@ public class PlayerInit {
                 }
                 System.out.println(event.getKey() + " -> " + payload);
             })
-            .addListener(PlayerPacketOutEvent.class, event -> {
+            .addListener(PlayerPacketOutEvent.class, _ -> {
                 //System.out.println("out " + event.getPacket().getClass().getSimpleName());
             })
-            .addListener(PlayerPacketEvent.class, event -> {
+            .addListener(PlayerPacketEvent.class, _ -> {
                 //System.out.println("in " + event.getPacket().getClass().getSimpleName());
             })
             .addListener(PlayerBlockBreakEvent.class, event -> {
@@ -316,7 +275,7 @@ public class PlayerInit {
         defaultClock.rate(4f);
     }
 
-    private final AtomicReference<TickMonitor> LAST_TICK = new AtomicReference<>();
+    private static final AtomicReference<TickMonitor> LAST_TICK = new AtomicReference<>();
 
     public void init() {
         var eventHandler = MinecraftServer.getGlobalEventHandler();
@@ -329,7 +288,7 @@ public class PlayerInit {
                 return;
 
             long ramUsage = Runtime.getRuntime().totalMemory() - Runtime.getRuntime().freeMemory();
-            ramUsage /= 1e6; // bytes to MB
+            ramUsage /= (long) 1e6; // bytes to MB
 
             TickMonitor tickMonitor = LAST_TICK.get();
             final Component header = Component.text("RAM USAGE: " + ramUsage + " MB")

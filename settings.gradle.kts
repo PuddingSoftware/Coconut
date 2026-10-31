@@ -10,4 +10,4 @@ include("jcstress-tests")
 
 include("demo")
 
-enableFeaturePreview("ENHANCED_GRAPH_ORDERING")
+//enableFeaturePreview("ENHANCED_GRAPH_ORDERING")

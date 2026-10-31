@@ -303,6 +303,7 @@ public final class InventoryClickProcessor {
         return clickResult;
     }
 
+    @SuppressWarnings("MethodCanBeStatic")
     private ItemStack takeItem(AbstractInventory clickedInventory,
                                AbstractInventory inventoryToTakeFrom,
                                ItemStack remainingItem,
@@ -395,6 +396,7 @@ public final class InventoryClickProcessor {
         return clickResult;
     }
 
+    @SuppressWarnings("MethodCanBeStatic")
     private void callClickEvent(Player player,
                                 AbstractInventory inventory,
                                 int slot,

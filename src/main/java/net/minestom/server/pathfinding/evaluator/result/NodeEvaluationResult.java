@@ -8,6 +8,7 @@ public final class NodeEvaluationResult {
 
     private final Status status;
 
+    @Nullable
     private final Node newNode;
 
     public NodeEvaluationResult(@NotNull Status status) {

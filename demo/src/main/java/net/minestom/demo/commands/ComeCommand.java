@@ -16,7 +16,7 @@ public class ComeCommand extends Command {
         super("come");
         setCondition(Conditions::playerOnly);
 
-        setDefaultExecutor((sender, context) -> {
+        setDefaultExecutor((sender, _) -> {
             final Player player = (Player) sender;
             final Instance currentInstance = player.getInstance();
 

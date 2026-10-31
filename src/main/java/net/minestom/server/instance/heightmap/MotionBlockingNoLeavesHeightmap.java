@@ -23,8 +23,8 @@ public class MotionBlockingNoLeavesHeightmap extends Heightmap {
                 || block.compare(Block.PALE_OAK_LEAVES)
                 || block.compare(Block.SPRUCE_LEAVES);
 
-        return (block.isSolid() && !block.compare(Block.COBWEB) && !block.compare(Block.BAMBOO_SAPLING) && !isLeavesBlock)
-                || block.isLiquid()
+        return (block.solid() && !block.compare(Block.COBWEB) && !block.compare(Block.BAMBOO_SAPLING) && !isLeavesBlock)
+                || block.liquid()
                 || "true".equals(block.getProperty("waterlogged"));
     }
 

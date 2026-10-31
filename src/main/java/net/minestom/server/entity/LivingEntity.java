@@ -3,7 +3,6 @@ package net.minestom.server.entity;
 import net.kyori.adventure.key.Key;
 import net.kyori.adventure.sound.Sound;
 import net.kyori.adventure.sound.Sound.Source;
-import net.minestom.server.ServerFlag;
 import net.minestom.server.adventure.AdventurePacketConvertor;
 import net.minestom.server.collision.BoundingBox;
 import net.minestom.server.collision.PhysicsResult;
@@ -41,6 +40,7 @@ import net.minestom.server.network.packet.server.play.DamageEventPacket;
 import net.minestom.server.network.packet.server.play.EntityAnimationPacket;
 import net.minestom.server.network.packet.server.play.EntityAttributesPacket;
 import net.minestom.server.network.player.PlayerConnection;
+import net.minestom.server.property.ServerProperties;
 import net.minestom.server.registry.RegistryKey;
 import net.minestom.server.scoreboard.Team;
 import net.minestom.server.sound.SoundEvent;
@@ -115,6 +115,16 @@ public class LivingEntity extends Entity implements EquipmentHandler {
     private ItemStack bodyEquipment = ItemStack.AIR;
     private ItemStack saddleEquipment = ItemStack.AIR;
 
+    private boolean jumping;
+
+    public void setJumping(boolean jumping) {
+        this.jumping = jumping;
+    }
+
+    public boolean isJumping() {
+        return jumping;
+    }
+
     /**
      * Constructor which allows to specify an UUID. Only use if you know what you are doing!
      */
@@ -136,14 +146,14 @@ public class LivingEntity extends Entity implements EquipmentHandler {
         boolean entityIsPlayer = this instanceof Player;
         boolean entityFlying = entityIsPlayer && ((Player) this).isFlying();
         final Block.Getter chunkCache = new ChunkCache(instance, currentChunk, Block.STONE);
-        PhysicsResult physicsResult = PhysicsUtils.simulateMovement(position, velocity.div(ServerFlag.SERVER_TICKS_PER_SECOND), boundingBox,
+        PhysicsResult physicsResult = PhysicsUtils.simulateMovement(position, velocity.div(ServerProperties.SERVER_TICKS_PER_SECOND.get()), boundingBox,
                 instance.getWorldBorder(), chunkCache, aerodynamics, hasNoGravity(), hasPhysics, onGround, entityFlying, getAttributeValue(Attribute.STEP_HEIGHT), previousPhysicsResult);
         this.previousPhysicsResult = physicsResult;
 
         Chunk finalChunk = ChunkUtils.retrieve(instance, currentChunk, physicsResult.newPosition());
         if (!ChunkUtils.isLoaded(finalChunk)) return;
 
-        velocity = physicsResult.newVelocity().mul(ServerFlag.SERVER_TICKS_PER_SECOND);
+        velocity = physicsResult.newVelocity().mul(ServerProperties.SERVER_TICKS_PER_SECOND.get());
         if (!(this instanceof Player)) {
             onGround = physicsResult.isOnGround();
             refreshPosition(physicsResult.newPosition(), true, !SYNCHRONIZE_ONLY_ENTITIES.contains(entityType));
